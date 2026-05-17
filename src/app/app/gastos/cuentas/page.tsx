@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import AccountFormModal from '@/components/gastos/AccountFormModal';
 import DepositModal from '@/components/gastos/DepositModal';
 import TransferModal from '@/components/gastos/TransferModal';
+import PaydayConfigModal, { paydaySummary } from '@/components/gastos/PaydayConfigModal';
 import {
   getAccounts,
   createAccount,
@@ -15,12 +16,13 @@ import {
   depositToAccount,
   transferBetweenAccounts,
 } from '@/actions/accounts';
+import { getPaydayConfig } from '@/actions/users';
+import type { PaydayConfig } from '@/types/user';
 
 export const dynamic = 'force-dynamic';
 
 import { formatCurrency } from '@/lib/utils';
 import type { IAccount } from '@/types/account';
-
 const typeLabels: Record<string, string> = {
   credit_card: 'Tarjeta de Crédito',
   debit: 'Débito',
@@ -50,8 +52,13 @@ export default function CuentasPage() {
   const [showForm, setShowForm] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
+  const [showPayday, setShowPayday] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Payday config
+  const [paydayConfig, setPaydayConfig] = useState<PaydayConfig | null>(null);
+  const [paydayLoaded, setPaydayLoaded] = useState(false);
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -66,6 +73,11 @@ export default function CuentasPage() {
 
   useEffect(() => {
     fetchAccounts();
+    // Load payday config once
+    getPaydayConfig()
+      .then((cfg) => setPaydayConfig(cfg))
+      .catch(() => {})
+      .finally(() => setPaydayLoaded(true));
   }, [fetchAccounts]);
 
   const total = accounts.reduce((a, c) => a + c.balance, 0);
@@ -124,9 +136,7 @@ export default function CuentasPage() {
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
-  }
-
-  return (
+  }    return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -134,7 +144,7 @@ export default function CuentasPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Cuentas</h1>
           <p className="text-sm text-foreground-muted mt-1">Gestiona tus cuentas financieras</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {accounts.length >= 2 && (
             <Button
               variant="outline"
@@ -146,9 +156,68 @@ export default function CuentasPage() {
               🔄 Transferir
             </Button>
           )}
+          <Button
+            variant={paydayConfig ? 'secondary' : 'outline'}
+            onClick={() => setShowPayday(true)}
+          >
+            {paydayConfig ? '💳 Día de Pago' : '💳 Configurar Sueldo'}
+          </Button>
           <Button onClick={openCreate}>+ Nueva Cuenta</Button>
         </div>
       </div>
+
+      {/* Payday prompt banner — shown only if not configured yet */}
+      {paydayLoaded && !paydayConfig && accounts.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowPayday(true)}
+          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-primary/8 border border-primary/25 hover:bg-primary/12 transition-colors text-left group"
+        >
+          <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform">
+            💳
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">¿Cuándo te pagan el sueldo?</p>
+            <p className="text-xs text-foreground-muted mt-0.5">
+              Configura tu día de pago para un mejor seguimiento de tus finanzas. ¡Solo toma un momento!
+            </p>
+          </div>
+          <span className="text-primary text-lg shrink-0">→</span>
+        </button>
+      )}
+
+      {/* Payday config summary card — shown when configured */}
+      {paydayLoaded && paydayConfig && (
+        <button
+          type="button"
+          onClick={() => setShowPayday(true)}
+          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-success/8 border border-success/20 hover:bg-success/12 transition-colors text-left group"
+        >
+          <div className="w-11 h-11 rounded-xl bg-success/15 flex items-center justify-center text-2xl shrink-0">
+            💳
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-bold text-foreground">
+                {paydayConfig.label || 'Día de Pago'}
+              </p>
+              <span className="text-[10px] bg-success/15 text-success px-2 py-0.5 rounded-full font-bold">
+                Configurado ✓
+              </span>
+            </div>
+            <p className="text-xs text-foreground-muted mt-0.5">{paydaySummary(paydayConfig)}</p>
+            {paydayConfig.amount && (
+              <p className="text-xs text-success font-semibold mt-0.5">
+                {formatCurrency(paydayConfig.amount, paydayConfig.currency)} esperado
+                {paydayConfig.accountId && accounts.find(a => a._id === paydayConfig?.accountId)
+                  ? ` · ${accounts.find(a => a._id === paydayConfig?.accountId)?.name}`
+                  : ''}
+              </p>
+            )}
+          </div>
+          <span className="text-foreground-muted text-xs shrink-0 group-hover:text-foreground transition-colors">Editar →</span>
+        </button>
+      )}
 
       {/* Balance Total */}
       <Card variant="glow" padding="lg">
@@ -289,6 +358,14 @@ export default function CuentasPage() {
         onSubmit={handleTransfer}
         accounts={accounts}
         preselectedAccountId={selectedAccount?._id}
+      />
+
+      <PaydayConfigModal
+        isOpen={showPayday}
+        onClose={() => setShowPayday(false)}
+        accounts={accounts}
+        currentConfig={paydayConfig}
+        onSaved={(cfg) => setPaydayConfig(cfg)}
       />
     </div>
   );

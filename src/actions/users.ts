@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/auth';
+import type { PaydayConfig } from '@/types/user';
 
 const API_URL = process.env.API_URL || 'http://localhost:5002';
 
@@ -52,4 +53,23 @@ export async function updateUser(id: string, data: any) {
 
 export async function deleteUser(id: string) {
   await fetchWithAuth(`/api/users/${id}`, { method: 'DELETE' });
+}
+
+// ── Payday profile (current user) ──────────────────────────────────────────
+
+export async function getPaydayConfig(): Promise<PaydayConfig | null> {
+  const res = await fetchWithAuth('/api/profile/payday');
+  return res.data;
+}
+
+export async function savePaydayConfig(data: PaydayConfig): Promise<PaydayConfig> {
+  const res = await fetchWithAuth('/api/profile/payday', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return res.data;
+}
+
+export async function deletePaydayConfig(): Promise<void> {
+  await fetchWithAuth('/api/profile/payday', { method: 'DELETE' });
 }
