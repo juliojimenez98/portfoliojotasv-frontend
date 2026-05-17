@@ -9,6 +9,7 @@ import { signOut } from 'next-auth/react';
 
 const gastosNavItems = [
   { href: '/app/gastos', label: 'Resumen', icon: '📊' },
+  { href: '/app/gastos/transacciones', label: 'Transacciones', icon: '💸' },
   { href: '/app/gastos/cuentas', label: 'Mis Cuentas', icon: '🏦' },
   { href: '/app/gastos/suscripciones', label: 'Suscripciones', icon: '🔄' },
   { href: '/app/gastos/reportes', label: 'Analítica', icon: '📈' },

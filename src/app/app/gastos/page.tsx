@@ -249,13 +249,13 @@ export default async function GastosDashboardPage({
             <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2">
               {recent.map((txn) => {
                 const catObj = categories.find((c) => c.value === txn.category);
-                const catLabel = catObj ? `${catObj.icon || '📁'} ${catObj.label}` : `📁 ${txn.category}`;
+                const catLabel = txn.category === 'transfer' ? '🔄 Transferencia' : (catObj ? `${catObj.icon || '📁'} ${catObj.label}` : `📁 ${txn.category}`);
 
                 return (
                   <div key={txn._id} className="flex items-center justify-between p-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm ${txn.type === 'income' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
-                        {txn.type === 'income' ? '↑' : '↓'}
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm ${txn.type === 'income' ? 'bg-success/10 text-success' : txn.type === 'transfer' ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
+                        {txn.type === 'income' ? '↑' : txn.type === 'transfer' ? '⇄' : '↓'}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">{txn.description}</p>
@@ -263,8 +263,8 @@ export default async function GastosDashboardPage({
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <p className={`text-sm font-semibold ${txn.type === 'income' ? 'text-success' : 'text-foreground'}`}>
-                        {txn.type === 'income' ? '+' : '-'}{formatCurrency(txn.amount)}
+                      <p className={`text-sm font-semibold ${txn.type === 'income' ? 'text-success' : txn.type === 'transfer' ? 'text-primary' : 'text-danger'}`}>
+                        {txn.type === 'income' ? '+' : txn.type === 'transfer' ? '⇄ ' : '-'}{formatCurrency(txn.amount)}
                       </p>
                       <DeleteTransactionButton transactionId={txn._id} />
                     </div>
