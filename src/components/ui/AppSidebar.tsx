@@ -13,6 +13,7 @@ const gastosNavItems = [
   { href: "/app/gastos/cuentas", label: "Cuentas", icon: "🏦" },
   { href: "/app/gastos/suscripciones", label: "Suscripciones", icon: "🔄" },
   { href: "/app/gastos/reportes", label: "Analítica", icon: "📈" },
+  { href: "/app/gastos/configuracion", label: "Configuración", icon: "⚙️" },
 ];
 
 export default function AppSidebar() {
@@ -21,6 +22,9 @@ export default function AppSidebar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const navItems = gastosNavItems;
+  const mobileNavItems = gastosNavItems.filter(
+    (item) => item.href !== "/app/gastos/configuracion",
+  );
 
   return (
     <>
@@ -172,7 +176,7 @@ export default function AppSidebar() {
       {/* ── MOBILE BOTTOM NAV (visible only on mobile) ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background-elevated border-t border-border shadow-[0_-4px_24px_rgba(0,0,0,0.12)]">
         <div className="flex items-stretch">
-          {navItems.map((item) => {
+          {mobileNavItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -238,6 +242,17 @@ export default function AppSidebar() {
                 <span className="text-2xl">🏠</span>
                 <span className="text-sm font-semibold text-foreground">
                   Volver al Home
+                </span>
+              </Link>
+
+              <Link
+                href="/app/gastos/configuracion"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-4 p-4 rounded-2xl bg-background border border-border active:bg-background-elevated transition-colors"
+              >
+                <span className="text-2xl">⚙️</span>
+                <span className="text-sm font-semibold text-foreground">
+                  Configuración
                 </span>
               </Link>
 

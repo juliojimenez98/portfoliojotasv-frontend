@@ -1,13 +1,15 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Card, { CardHeader, CardTitle } from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
-import AccountFormModal from '@/components/gastos/AccountFormModal';
-import DepositModal from '@/components/gastos/DepositModal';
-import TransferModal from '@/components/gastos/TransferModal';
-import PaydayConfigModal, { paydaySummary } from '@/components/gastos/PaydayConfigModal';
+import React, { useState, useEffect, useCallback } from "react";
+import Card, { CardHeader, CardTitle } from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
+import AccountFormModal from "@/components/gastos/AccountFormModal";
+import DepositModal from "@/components/gastos/DepositModal";
+import TransferModal from "@/components/gastos/TransferModal";
+import PaydayConfigModal, {
+  paydaySummary,
+} from "@/components/gastos/PaydayConfigModal";
 import {
   getAccounts,
   createAccount,
@@ -15,33 +17,34 @@ import {
   deleteAccount,
   depositToAccount,
   transferBetweenAccounts,
-} from '@/actions/accounts';
-import { getPaydayConfig } from '@/actions/users';
-import type { PaydayConfig } from '@/types/user';
+} from "@/actions/accounts";
+import { getPaydayConfig } from "@/actions/users";
+import type { PaydayConfig } from "@/types/user";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { formatCurrency } from '@/lib/utils';
-import type { IAccount } from '@/types/account';
+import { formatCurrency } from "@/lib/utils";
+import type { IAccount } from "@/types/account";
 const typeLabels: Record<string, string> = {
-  credit_card: 'Tarjeta de Crédito',
-  debit: 'Débito',
-  cash: 'Efectivo',
-  savings: 'Ahorros',
-  other: 'Otro',
+  credit_card: "Tarjeta de Crédito",
+  debit: "Débito",
+  cash: "Efectivo",
+  savings: "Ahorros",
+  other: "Otro",
 };
 
 const typeIcons: Record<string, string> = {
-  credit_card: '💳',
-  debit: '🏦',
-  cash: '💵',
-  savings: '🏆',
-  other: '📁',
+  credit_card: "💳",
+  debit: "🏦",
+  cash: "💵",
+  savings: "🏆",
+  investment: "📈",
+  other: "📁",
 };
 
 const refreshLabels: Record<string, string> = {
-  automatic: '⚡ Automático',
-  manual: '✋ Manual',
+  automatic: "⚡ Automático",
+  manual: "✋ Manual",
 };
 
 export default function CuentasPage() {
@@ -100,12 +103,21 @@ export default function CuentasPage() {
     await fetchAccounts();
   };
 
-  const handleDeposit = async (accountId: string, amount: number, description?: string) => {
+  const handleDeposit = async (
+    accountId: string,
+    amount: number,
+    description?: string,
+  ) => {
     await depositToAccount(accountId, amount, description);
     await fetchAccounts();
   };
 
-  const handleTransfer = async (fromId: string, toId: string, amount: number, description?: string) => {
+  const handleTransfer = async (
+    fromId: string,
+    toId: string,
+    amount: number,
+    description?: string,
+  ) => {
     await transferBetweenAccounts(fromId, toId, amount, description);
     await fetchAccounts();
   };
@@ -136,13 +148,18 @@ export default function CuentasPage() {
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
-  }    return (
+  }
+  return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Cuentas</h1>
-          <p className="text-sm text-foreground-muted mt-1">Gestiona tus cuentas financieras</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            Cuentas
+          </h1>
+          <p className="text-sm text-foreground-muted mt-1">
+            Gestiona tus cuentas financieras
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {accounts.length >= 2 && (
@@ -157,10 +174,10 @@ export default function CuentasPage() {
             </Button>
           )}
           <Button
-            variant={paydayConfig ? 'secondary' : 'outline'}
+            variant={paydayConfig ? "secondary" : "outline"}
             onClick={() => setShowPayday(true)}
           >
-            {paydayConfig ? '💳 Día de Pago' : '💳 Configurar Sueldo'}
+            {paydayConfig ? "💳 Día de Pago" : "💳 Configurar Sueldo"}
           </Button>
           <Button onClick={openCreate}>+ Nueva Cuenta</Button>
         </div>
@@ -177,9 +194,12 @@ export default function CuentasPage() {
             💳
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground">¿Cuándo te pagan el sueldo?</p>
+            <p className="text-sm font-bold text-foreground">
+              ¿Cuándo te pagan el sueldo?
+            </p>
             <p className="text-xs text-foreground-muted mt-0.5">
-              Configura tu día de pago para un mejor seguimiento de tus finanzas. ¡Solo toma un momento!
+              Configura tu día de pago para un mejor seguimiento de tus
+              finanzas. ¡Solo toma un momento!
             </p>
           </div>
           <span className="text-primary text-lg shrink-0">→</span>
@@ -199,23 +219,29 @@ export default function CuentasPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-bold text-foreground">
-                {paydayConfig.label || 'Día de Pago'}
+                {paydayConfig.label || "Día de Pago"}
               </p>
               <span className="text-[10px] bg-success/15 text-success px-2 py-0.5 rounded-full font-bold">
                 Configurado ✓
               </span>
             </div>
-            <p className="text-xs text-foreground-muted mt-0.5">{paydaySummary(paydayConfig)}</p>
+            <p className="text-xs text-foreground-muted mt-0.5">
+              {paydaySummary(paydayConfig)}
+            </p>
             {paydayConfig.amount && (
               <p className="text-xs text-success font-semibold mt-0.5">
-                {formatCurrency(paydayConfig.amount, paydayConfig.currency)} esperado
-                {paydayConfig.accountId && accounts.find(a => a._id === paydayConfig?.accountId)
-                  ? ` · ${accounts.find(a => a._id === paydayConfig?.accountId)?.name}`
-                  : ''}
+                {formatCurrency(paydayConfig.amount, paydayConfig.currency)}{" "}
+                esperado
+                {paydayConfig.accountId &&
+                accounts.find((a) => a._id === paydayConfig?.accountId)
+                  ? ` · ${accounts.find((a) => a._id === paydayConfig?.accountId)?.name}`
+                  : ""}
               </p>
             )}
           </div>
-          <span className="text-foreground-muted text-xs shrink-0 group-hover:text-foreground transition-colors">Editar →</span>
+          <span className="text-foreground-muted text-xs shrink-0 group-hover:text-foreground transition-colors">
+            Editar →
+          </span>
         </button>
       )}
 
@@ -223,8 +249,13 @@ export default function CuentasPage() {
       <Card variant="glow" padding="lg">
         <div className="text-center">
           <CardTitle className="text-center">Balance Total</CardTitle>
-          <p className="text-4xl md:text-5xl font-bold gradient-text mt-2">{formatCurrency(total)}</p>
-          <p className="text-sm text-foreground-subtle mt-2">{accounts.length} cuenta{accounts.length !== 1 ? 's' : ''} activa{accounts.length !== 1 ? 's' : ''}</p>
+          <p className="text-4xl md:text-5xl font-bold gradient-text mt-2">
+            {formatCurrency(total)}
+          </p>
+          <p className="text-sm text-foreground-subtle mt-2">
+            {accounts.length} cuenta{accounts.length !== 1 ? "s" : ""} activa
+            {accounts.length !== 1 ? "s" : ""}
+          </p>
         </div>
       </Card>
 
@@ -232,8 +263,12 @@ export default function CuentasPage() {
       {accounts.length === 0 ? (
         <div className="text-center py-16">
           <div className="text-5xl mb-4">🏦</div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">No hay cuentas aún</h3>
-          <p className="text-sm text-foreground-muted mb-4">Crea tu primera cuenta para empezar a registrar gastos.</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            No hay cuentas aún
+          </h3>
+          <p className="text-sm text-foreground-muted mb-4">
+            Crea tu primera cuenta para empezar a registrar gastos.
+          </p>
           <Button onClick={openCreate}>+ Crear primera cuenta</Button>
         </div>
       ) : (
@@ -246,30 +281,38 @@ export default function CuentasPage() {
                     className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
                     style={{ backgroundColor: `${acc.color}20` }}
                   >
-                    {typeIcons[acc.type] || '📁'}
+                    {typeIcons[acc.type] || "📁"}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-base font-semibold text-foreground truncate">{acc.name}</p>
+                    <p className="text-base font-semibold text-foreground truncate">
+                      {acc.name}
+                    </p>
                     <p className="text-xs text-foreground-subtle">
                       {typeLabels[acc.type] || acc.type}
                       {acc.bankName && ` · ${acc.bankName}`}
                     </p>
                   </div>
                 </div>
-                <Badge variant={acc.isActive ? 'success' : 'danger'} dot>
-                  {acc.isActive ? 'Activa' : 'Inactiva'}
+                <Badge variant={acc.isActive ? "success" : "danger"} dot>
+                  {acc.isActive ? "Activa" : "Inactiva"}
                 </Badge>
               </CardHeader>
 
               {/* Description */}
               {acc.description && (
-                <p className="text-xs text-foreground-subtle mt-2 line-clamp-2">{acc.description}</p>
+                <p className="text-xs text-foreground-subtle mt-2 line-clamp-2">
+                  {acc.description}
+                </p>
               )}
 
               {/* Balance */}
               <div className="mt-4">
-                <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">Balance</p>
-                <p className="text-2xl font-bold text-foreground">{formatCurrency(acc.balance)}</p>
+                <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                  Balance
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {formatCurrency(acc.balance)}
+                </p>
               </div>
 
               {/* Meta info */}

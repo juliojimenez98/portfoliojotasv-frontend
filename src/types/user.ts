@@ -11,13 +11,13 @@ export interface IUser {
 }
 
 export type PaydayType =
-  | 'fixed_day'
-  | 'last_day'
-  | 'last_business_day'
-  | 'business_days_before_end'
-  | 'first_day'
-  | 'first_business_day'
-  | 'custom_text';
+  | "fixed_day"
+  | "last_day"
+  | "last_business_day"
+  | "business_days_before_end"
+  | "first_day"
+  | "first_business_day"
+  | "custom_text";
 
 export interface PaydayConfig {
   type: PaydayType;
