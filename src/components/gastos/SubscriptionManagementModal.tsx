@@ -92,7 +92,7 @@ export default function SubscriptionManagementModal({
     e.preventDefault();
     if (!form.name.trim()) return setError("El nombre es requerido");
     const numAmount = parseFloat(form.amount);
-    if (!numAmount || numAmount <= 0)
+    if (isNaN(numAmount) || numAmount <= 0)
       return setError("Ingresa un monto válido mayor a 0");
     if (!form.accountId) return setError("Selecciona una cuenta para el cobro");
 
@@ -101,7 +101,7 @@ export default function SubscriptionManagementModal({
     try {
       const payload = {
         name: form.name.trim(),
-        amount: numAmount,
+        amount: form.currency === "CLP" ? Math.round(numAmount) : numAmount,
         currency: form.currency,
         billingCycle: form.billingCycle,
         billingDay: parseInt(form.billingDay, 10),
@@ -255,7 +255,7 @@ export default function SubscriptionManagementModal({
               name="amount"
               type="number"
               step={form.currency === "CLP" ? "1" : "0.01"}
-              min="0.01"
+              min={form.currency === "CLP" ? "1" : "0.01"}
               value={form.amount}
               onChange={handleChange}
               placeholder="0"
