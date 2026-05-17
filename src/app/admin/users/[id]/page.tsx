@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getUser } from '@/actions/users';
 import EditUserForm from './EditUserForm';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Editar Usuario',
 };

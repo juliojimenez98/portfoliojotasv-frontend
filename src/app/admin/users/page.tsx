@@ -4,6 +4,8 @@ import Card, { CardHeader, CardTitle } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import { getUsers } from '@/actions/users';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Gestión de Usuarios',
 };

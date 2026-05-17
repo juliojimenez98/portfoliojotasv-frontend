@@ -5,6 +5,8 @@ import TransactionsPanel from '@/components/gastos/TransactionsPanel';
 import type { ITransaction } from '@/types/transaction';
 import type { IAccount } from '@/types/account';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Transacciones',
   description: 'Historial completo de movimientos financieros con filtros avanzados.',

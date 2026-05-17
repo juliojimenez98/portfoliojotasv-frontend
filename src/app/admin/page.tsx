@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card';
 import { getUsers } from '@/actions/users';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Admin Dashboard',
 };

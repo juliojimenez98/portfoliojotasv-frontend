@@ -5,6 +5,9 @@ import Badge from '@/components/ui/Badge';
 import { getAccounts } from '@/actions/accounts';
 import { getMonthlyExpenseSummary, getCurrentMonthTotal, getCurrentYearTotal, getTransactions, getTransactionCategories } from '@/actions/transactions';
 import { getSubscriptions, getActiveSubscriptionsCost } from '@/actions/subscriptions';
+
+export const dynamic = 'force-dynamic';
+
 import NewTransactionButton from '@/components/gastos/NewTransactionButton';
 import DeleteTransactionButton from '@/components/gastos/DeleteTransactionButton';
 import CategoryChartCard from '@/components/gastos/CategoryChartCard';

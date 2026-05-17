@@ -7,6 +7,8 @@ import type { ISubscription } from '@/types/subscription';
 import type { IAccount } from '@/types/account';
 import type { ITransaction } from '@/types/transaction';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Suscripciones',
   description: 'Gestión de suscripciones mensuales y anuales.',

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { getMonthlyComparisonSummary, getTransactionCategories } from '@/actions/transactions';
 import MonthlyComparisonContainer from '@/components/gastos/MonthlyComparisonContainer';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Reportes y Comparativa',
   description: 'Análisis financiero mes a mes de ingresos, gastos y capacidad de ahorro.',

@@ -15,6 +15,9 @@ import {
   depositToAccount,
   transferBetweenAccounts,
 } from '@/actions/accounts';
+
+export const dynamic = 'force-dynamic';
+
 import { formatCurrency } from '@/lib/utils';
 import type { IAccount } from '@/types/account';
 
