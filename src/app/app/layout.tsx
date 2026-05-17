@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import AppSidebar from '@/components/ui/AppSidebar';
+import type { Metadata } from "next";
+import AppSidebar from "@/components/ui/AppSidebar";
 
 export const metadata: Metadata = {
-  title: 'Aplicaciones',
-  description: 'Ecosistema de aplicaciones personales.',
+  title: "Aplicaciones",
+  description: "Ecosistema de aplicaciones personales.",
   icons: {
-    icon: '/favicons/gastos.svg',
+    icon: "/favicons/gastos.svg",
   },
 };
 
@@ -21,7 +21,7 @@ export default function AppsLayout({
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
           {children}
         </div>
       </main>

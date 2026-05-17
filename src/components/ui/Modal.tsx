@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import React, { useEffect, useCallback, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { cn } from '@/lib/utils';
+import React, { useEffect, useCallback, useState } from "react";
+import { createPortal } from "react-dom";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 const sizeStyles = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
 };
 
 export default function Modal({
@@ -24,7 +24,7 @@ export default function Modal({
   onClose,
   title,
   children,
-  size = 'md',
+  size = "md",
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -34,47 +34,57 @@ export default function Modal({
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     },
-    [onClose]
+    [onClose],
   );
 
   useEffect(() => {
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
     }
     return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "";
     };
   }, [isOpen, handleEscape]);
 
   if (!isOpen || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 overflow-y-auto flex min-h-screen items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end md:items-center md:justify-center md:p-4 md:overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/75 backdrop-blur-md animate-fade-in"
         onClick={onClose}
       />
 
-      {/* Modal Content */}
+      {/* ── MOBILE: bottom sheet ── */}
       <div
         className={cn(
-          'relative w-full rounded-2xl bg-background-card border border-border shadow-2xl my-8 overflow-hidden',
-          'animate-fade-in',
-          sizeStyles[size]
+          // Mobile: full-width bottom sheet sliding up
+          "relative w-full rounded-t-3xl bg-background-card border-t border-x border-border shadow-2xl overflow-hidden",
+          "md:rounded-2xl md:border md:my-8",
+          // Desktop: centered dialog with max-width
+          "md:" + sizeStyles[size],
+          "animate-slide-up md:animate-fade-in",
         )}
       >
+        {/* Drag handle (mobile only) */}
+        <div className="md:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-border rounded-full" />
+        </div>
+
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-background-card/80 backdrop-blur sticky top-0 z-10">
-            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          <div className="flex items-center justify-between px-5 py-3 md:px-6 md:py-4 border-b border-border bg-background-card/80 backdrop-blur sticky top-0 z-10">
+            <h2 className="text-base md:text-lg font-semibold text-foreground">
+              {title}
+            </h2>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-foreground-subtle hover:text-foreground hover:bg-white/5 transition-colors"
+              className="p-1.5 rounded-xl text-foreground-subtle hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
               aria-label="Cerrar"
             >
               <svg
@@ -95,10 +105,12 @@ export default function Modal({
           </div>
         )}
 
-        {/* Body */}
-        <div className="px-6 py-4 max-h-[80vh] overflow-y-auto">{children}</div>
+        {/* Body – on mobile uses most of the viewport height */}
+        <div className="px-4 py-4 md:px-6 overflow-y-auto max-h-[85dvh] md:max-h-[80vh]">
+          {children}
+        </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
