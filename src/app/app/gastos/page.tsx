@@ -7,6 +7,7 @@ import { getMonthlyExpenseSummary, getCurrentMonthTotal, getCurrentYearTotal, ge
 import { getSubscriptions, getActiveSubscriptionsCost } from '@/actions/subscriptions';
 import NewTransactionButton from '@/components/gastos/NewTransactionButton';
 import DeleteTransactionButton from '@/components/gastos/DeleteTransactionButton';
+import CategoryChartCard from '@/components/gastos/CategoryChartCard';
 import { formatCurrency } from '@/lib/utils';
 import type { IAccount } from '@/types/account';
 import type { ITransaction, MonthlyExpenseSummary } from '@/types/transaction';
@@ -190,39 +191,11 @@ export default async function GastosDashboardPage({
           )}
         </Card>
 
-        <Card variant="glass">
-          <CardHeader>
-            <h3 className="text-lg font-semibold text-foreground">Gastos por Categoría</h3>
-            <Badge variant="info" className="capitalize">{monthName}</Badge>
-          </CardHeader>
-          {categorySummary.length === 0 ? (
-            <p className="text-sm text-foreground-subtle text-center py-8">Sin gastos registrados.</p>
-          ) : (
-            <div className="space-y-4 max-h-[320px] overflow-y-auto pr-2">
-              {categorySummary.map((item) => {
-                const percentage = maxCategoryTotal > 0 ? (item.total / maxCategoryTotal) * 100 : 0;
-                return (
-                  <div key={item.value}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{item.icon}</span>
-                        <span className="text-sm font-medium text-foreground">{item.label}</span>
-                        <span className="text-xs text-foreground-subtle">({item.count})</span>
-                      </div>
-                      <span className="text-sm font-semibold text-foreground">{formatCurrency(item.total)}</span>
-                    </div>
-                    <div className="h-2.5 rounded-full bg-background-elevated overflow-hidden p-0.5 border border-border/50">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-1000 ease-out"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+        <CategoryChartCard
+          monthName={monthName}
+          categorySummary={categorySummary}
+          maxCategoryTotal={maxCategoryTotal}
+        />
       </div>
 
       {/* Account Expenses & Recent Transactions */}
