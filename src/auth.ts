@@ -38,6 +38,9 @@ export const {
 
         try {
           const API_URL = process.env.API_URL || 'http://localhost:5002';
+          console.log('[NextAuth] Intentando conectar al backend en URL:', API_URL);
+          console.log('[NextAuth] Credenciales para email:', credentials.email);
+
           const res = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -47,9 +50,12 @@ export const {
             }),
           });
 
+          console.log('[NextAuth] HTTP Status de respuesta del backend:', res.status, res.statusText);
           const data = await res.json();
+          console.log('[NextAuth] Cuerpo de respuesta del backend:', JSON.stringify(data));
 
           if (res.ok && data.success && data.user) {
+            console.log('[NextAuth] Login exitoso para usuario:', data.user.email);
             return {
               id: data.user.id,
               name: data.user.username,
@@ -59,9 +65,10 @@ export const {
               token: data.token,
             };
           }
+          console.log('[NextAuth] Login fallido en backend. res.ok:', res.ok, 'data.success:', data?.success);
           return null;
         } catch (error) {
-          console.error('Auth error:', error);
+          console.error('[NextAuth] Error de conexión / Fetch falló hacia el backend:', error);
           return null;
         }
       },

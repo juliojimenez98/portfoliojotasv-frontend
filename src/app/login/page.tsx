@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import { checkBackendHealth } from '@/actions/health';
 
 function LoginForm() {
   const router = useRouter();
@@ -17,6 +18,16 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [healthStatus, setHealthStatus] = useState<any>(null);
+  const [isHealthLoading, setIsHealthLoading] = useState(true);
+
+  useEffect(() => {
+    checkBackendHealth().then((res) => {
+      setHealthStatus(res);
+      setIsHealthLoading(false);
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +57,30 @@ function LoginForm() {
   return (
     <div className="p-6 md:p-8 rounded-2xl bg-background-card border border-border shadow-lg">
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Backend Health Status Box */}
+        <div className="p-3.5 rounded-xl bg-background-elevated border border-border text-xs space-y-1.5">
+          <div className="flex items-center justify-between font-semibold">
+            <span className="text-foreground-muted">Estado del Backend:</span>
+            {isHealthLoading ? (
+              <span className="text-primary animate-pulse">Verificando conexión...</span>
+            ) : healthStatus?.success ? (
+              <span className="text-success flex items-center gap-1">🟢 Conectado (HTTP {healthStatus.status})</span>
+            ) : (
+              <span className="text-danger flex items-center gap-1">🔴 Desconectado / Error</span>
+            )}
+          </div>
+          {!isHealthLoading && (
+            <div className="text-[11px] font-mono text-foreground-subtle truncate bg-black/20 dark:bg-white/5 p-1 rounded">
+              URL: {healthStatus?.apiUrl || 'No configurada'}
+            </div>
+          )}
+          {!isHealthLoading && !healthStatus?.success && (
+            <div className="text-[11px] text-danger bg-danger/10 p-1.5 rounded border border-danger/20">
+              Error: {healthStatus?.error || 'No se pudo conectar con el servidor API'}
+            </div>
+          )}
+        </div>
+
         {error && (
           <div className="p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">
             {error}
