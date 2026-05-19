@@ -17,6 +17,7 @@ import {
   deleteAccount,
   depositToAccount,
   transferBetweenAccounts,
+  recalculateBalances,
 } from "@/actions/accounts";
 import { getPaydayConfig } from "@/actions/users";
 import type { PaydayConfig } from "@/types/user";
@@ -58,6 +59,7 @@ export default function CuentasPage() {
   const [showPayday, setShowPayday] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isRecalculating, setIsRecalculating] = useState(false);
 
   // Payday config
   const [paydayConfig, setPaydayConfig] = useState<PaydayConfig | null>(null);
@@ -122,6 +124,18 @@ export default function CuentasPage() {
     await fetchAccounts();
   };
 
+  const handleRecalculate = async () => {
+    setIsRecalculating(true);
+    try {
+      await recalculateBalances();
+      await fetchAccounts();
+    } catch {
+      alert("Error al recalcular balances");
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
+
   const openEdit = (acc: IAccount) => {
     setSelectedAccount(acc);
     setShowForm(true);
@@ -173,6 +187,14 @@ export default function CuentasPage() {
               🔄 Transferir
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={handleRecalculate}
+            disabled={isRecalculating}
+            title="Recalcula todos los balances desde las transacciones registradas para corregir cualquier desajuste"
+          >
+            {isRecalculating ? "⏳ Recalculando..." : "🔧 Corregir Balances"}
+          </Button>
           <Button
             variant={paydayConfig ? "secondary" : "outline"}
             onClick={() => setShowPayday(true)}

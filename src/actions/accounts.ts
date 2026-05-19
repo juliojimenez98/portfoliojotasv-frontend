@@ -67,6 +67,15 @@ export async function depositToAccount(id: string, amount: number, description?:
   return res.data;
 }
 
+export async function recalculateBalances() {
+  const res = await fetchWithAuth('/api/accounts/recalculate-balances', {
+    method: 'POST',
+  });
+  revalidatePath('/app/gastos/cuentas');
+  revalidatePath('/app/gastos');
+  return res.data;
+}
+
 export async function transferBetweenAccounts(
   fromAccountId: string,
   toAccountId: string,

@@ -80,15 +80,28 @@ export default function TransactionFormModal({
     if (isOpen) {
       if (editingTransaction) {
         setForm({
-          type: editingTransaction.type === 'transfer' ? 'expense' : editingTransaction.type,
-          accountId: editingTransaction.accountId || (accounts.length > 0 ? accounts[0]._id : ""),
+          type:
+            editingTransaction.type === "transfer"
+              ? "expense"
+              : editingTransaction.type,
+          accountId:
+            editingTransaction.accountId ||
+            (accounts.length > 0 ? accounts[0]._id : ""),
           description: editingTransaction.description || "",
-          originalAmount: (editingTransaction.originalAmount ?? editingTransaction.amount ?? "").toString(),
+          originalAmount: (
+            editingTransaction.originalAmount ??
+            editingTransaction.amount ??
+            ""
+          ).toString(),
           originalCurrency: editingTransaction.originalCurrency || "CLP",
-          exchangeRate: editingTransaction.exchangeRate && editingTransaction.exchangeRate !== 1
-            ? editingTransaction.exchangeRate.toString()
-            : "",
-          category: editingTransaction.category || (categories.length > 0 ? categories[0].value : "other"),
+          exchangeRate:
+            editingTransaction.exchangeRate &&
+            editingTransaction.exchangeRate !== 1
+              ? editingTransaction.exchangeRate.toString()
+              : "",
+          category:
+            editingTransaction.category ||
+            (categories.length > 0 ? categories[0].value : "other"),
           customCategory: "",
           date: editingTransaction.date
             ? new Date(editingTransaction.date).toISOString().split("T")[0]
@@ -170,7 +183,12 @@ export default function TransactionFormModal({
   const isExpense = form.type === "expense";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editingTransaction ? "✏️ Editar Movimiento" : "Nuevo Movimiento"} size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingTransaction ? "✏️ Editar Movimiento" : "Nuevo Movimiento"}
+      size="md"
+    >
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <div className="p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-sm">
@@ -445,7 +463,9 @@ export default function TransactionFormModal({
           >
             {editingTransaction
               ? "✓ Guardar Cambios"
-              : isExpense ? "↓ Registrar Gasto" : "↑ Registrar Ingreso"}
+              : isExpense
+                ? "↓ Registrar Gasto"
+                : "↑ Registrar Ingreso"}
           </Button>
         </div>
       </form>

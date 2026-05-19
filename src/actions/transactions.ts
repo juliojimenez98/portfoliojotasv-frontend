@@ -1,91 +1,98 @@
-'use server';
+"use server";
 
-import { auth } from '@/auth';
-import { revalidatePath } from 'next/cache';
+import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 
-const API_URL = process.env.API_URL || 'http://localhost:5002';
+const API_URL = process.env.API_URL || "http://localhost:5002";
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const session = await auth();
-  if (!session?.user?.token) throw new Error('Unauthorized');
+  if (!session?.user?.token) throw new Error("Unauthorized");
 
   const headers = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     Authorization: `Bearer ${session.user.token}`,
     ...options.headers,
   };
 
   const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
-  if (!res.ok) throw new Error('API request failed');
+  if (!res.ok) throw new Error("API request failed");
   return res.json();
 }
 
-export async function getTransactions(filters: { type?: string; accountId?: string } = {}) {
+export async function getTransactions(
+  filters: { type?: string; accountId?: string } = {},
+) {
   const params = new URLSearchParams();
-  if (filters.type) params.append('type', filters.type);
-  if (filters.accountId) params.append('accountId', filters.accountId);
-  
-  const query = params.toString() ? `?${params.toString()}` : '';
+  if (filters.type) params.append("type", filters.type);
+  if (filters.accountId) params.append("accountId", filters.accountId);
+
+  const query = params.toString() ? `?${params.toString()}` : "";
   const res = await fetchWithAuth(`/api/transactions${query}`);
   return res.data;
 }
 
 export async function getTransactionCategories() {
-  const res = await fetchWithAuth('/api/transactions/categories');
+  const res = await fetchWithAuth("/api/transactions/categories");
   return res.data;
 }
 
 export async function createTransaction(data: any) {
-  const res = await fetchWithAuth('/api/transactions', {
-    method: 'POST',
+  const res = await fetchWithAuth("/api/transactions", {
+    method: "POST",
     body: JSON.stringify(data),
   });
-  revalidatePath('/app/gastos');
+  revalidatePath("/app/gastos");
   return res.data;
 }
 
 export async function updateTransaction(id: string, data: any) {
   const res = await fetchWithAuth(`/api/transactions/${id}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify(data),
   });
-  revalidatePath('/app/gastos');
-  revalidatePath('/app/gastos/transacciones');
+  revalidatePath("/app/gastos");
+  revalidatePath("/app/gastos/transacciones");
   return res.data;
 }
 
 export async function deleteTransaction(id: string) {
-  await fetchWithAuth(`/api/transactions/${id}`, { method: 'DELETE' });
-  revalidatePath('/app/gastos');
+  await fetchWithAuth(`/api/transactions/${id}`, { method: "DELETE" });
+  revalidatePath("/app/gastos");
 }
 
 export async function createCategory(data: { label: string; icon: string }) {
-  const res = await fetchWithAuth('/api/transactions/categories', {
-    method: 'POST',
+  const res = await fetchWithAuth("/api/transactions/categories", {
+    method: "POST",
     body: JSON.stringify(data),
   });
-  revalidatePath('/app/gastos');
+  revalidatePath("/app/gastos");
   return res.data;
 }
 
-export async function updateCategory(id: string, data: { label?: string; icon?: string }) {
+export async function updateCategory(
+  id: string,
+  data: { label?: string; icon?: string },
+) {
   const res = await fetchWithAuth(`/api/transactions/categories/${id}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify(data),
   });
-  revalidatePath('/app/gastos');
+  revalidatePath("/app/gastos");
   return res.data;
 }
 
 export async function deleteCategory(id: string) {
-  await fetchWithAuth(`/api/transactions/categories/${id}`, { method: 'DELETE' });
-  revalidatePath('/app/gastos');
+  await fetchWithAuth(`/api/transactions/categories/${id}`, {
+    method: "DELETE",
+  });
+  revalidatePath("/app/gastos");
 }
 
 export async function getMonthlyExpenseSummary(month: number, year: number) {
   const [txns, resAccounts] = await Promise.all([
-    getTransactions({ type: 'expense' }),
-    fetchWithAuth('/api/accounts'),
+    getTransactions({ type: "expense" }),
+    fetchWithAuth("/api/accounts"),
   ]);
 
   const accounts = resAccounts.data || [];
@@ -95,14 +102,17 @@ export async function getMonthlyExpenseSummary(month: number, year: number) {
     return d.getMonth() + 1 === month && d.getFullYear() === year;
   });
 
-  const summaryMap: Record<string, { total: number; count: number; name: string; color: string }> = {};
+  const summaryMap: Record<
+    string,
+    { total: number; count: number; name: string; color: string }
+  > = {};
 
   for (const acc of accounts) {
     summaryMap[acc._id] = {
       total: 0,
       count: 0,
       name: acc.name,
-      color: acc.color || '#8b5cf6',
+      color: acc.color || "#8b5cf6",
     };
   }
 
@@ -126,15 +136,19 @@ export async function getMonthlyExpenseSummary(month: number, year: number) {
 }
 
 export async function getCurrentMonthTotal() {
-  const txns = await getTransactions({ type: 'expense' });
+  const txns = await getTransactions({ type: "expense" });
   const now = new Date();
   return txns
-    .filter((t: any) => new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
+    .filter(
+      (t: any) =>
+        new Date(t.date).getMonth() === now.getMonth() &&
+        new Date(t.date).getFullYear() === now.getFullYear(),
+    )
     .reduce((acc: number, t: any) => acc + t.amount, 0);
 }
 
 export async function getCurrentYearTotal() {
-  const txns = await getTransactions({ type: 'expense' });
+  const txns = await getTransactions({ type: "expense" });
   const now = new Date();
   return txns
     .filter((t: any) => new Date(t.date).getFullYear() === now.getFullYear())
@@ -144,11 +158,23 @@ export async function getCurrentYearTotal() {
 export async function getMonthlyComparisonSummary(year: number) {
   const txns = await getTransactions();
 
-  const filtered = txns.filter((t: any) => new Date(t.date).getFullYear() === year);
+  const filtered = txns.filter(
+    (t: any) => new Date(t.date).getFullYear() === year,
+  );
 
   const months = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
   ];
 
   const monthlyData = months.map((monthName, idx) => ({
@@ -164,12 +190,13 @@ export async function getMonthlyComparisonSummary(year: number) {
     const d = new Date(t.date);
     const m = d.getMonth();
 
-    if (t.type === 'income') {
+    if (t.type === "income") {
       monthlyData[m].income += t.amount;
-    } else if (t.type === 'expense') {
+    } else if (t.type === "expense") {
       monthlyData[m].expense += t.amount;
-      const cat = t.category || 'other';
-      monthlyData[m].categories[cat] = (monthlyData[m].categories[cat] || 0) + t.amount;
+      const cat = t.category || "other";
+      monthlyData[m].categories[cat] =
+        (monthlyData[m].categories[cat] || 0) + t.amount;
     }
   }
 
