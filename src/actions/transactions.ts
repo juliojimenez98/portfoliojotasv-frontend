@@ -44,6 +44,16 @@ export async function createTransaction(data: any) {
   return res.data;
 }
 
+export async function updateTransaction(id: string, data: any) {
+  const res = await fetchWithAuth(`/api/transactions/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  revalidatePath('/app/gastos');
+  revalidatePath('/app/gastos/transacciones');
+  return res.data;
+}
+
 export async function deleteTransaction(id: string) {
   await fetchWithAuth(`/api/transactions/${id}`, { method: 'DELETE' });
   revalidatePath('/app/gastos');

@@ -4,10 +4,11 @@ import React, { useState, useMemo } from "react";
 import Card, { CardHeader } from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import DeleteTransactionButton from "./DeleteTransactionButton";
+import TransactionFormModal from "./TransactionFormModal";
 import { formatCurrency, cn } from "@/lib/utils";
+import { updateTransaction } from "@/actions/transactions";
 import type { ITransaction } from "@/types/transaction";
 import type { IAccount } from "@/types/account";
-
 import type { ISpendPeriod } from "@/types/period";
 
 interface TransactionsPanelProps {
@@ -29,6 +30,7 @@ export default function TransactionsPanel({
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [accountFilter, setAccountFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingTxn, setEditingTxn] = useState<ITransaction | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [periodFilter, setPeriodFilter] = useState<string>("all"); // 'all' | period._id
@@ -443,7 +445,7 @@ export default function TransactionsPanel({
                   return (
                     <tr
                       key={txn._id}
-                      className="border-b border-border/50 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                      className="border-b border-border/50 hover:bg-black/2 dark:hover:bg-white/2 transition-colors"
                     >
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-3">
@@ -511,7 +513,18 @@ export default function TransactionsPanel({
                         </span>
                       </td>
                       <td className="py-3 px-1 text-right">
-                        <DeleteTransactionButton transactionId={txn._id} />
+                        <div className="flex items-center justify-end gap-1">
+                          {txn.type !== "transfer" && (
+                            <button
+                              onClick={() => setEditingTxn(txn)}
+                              className="p-1.5 rounded-lg text-foreground-subtle hover:text-primary hover:bg-primary/10 transition-colors"
+                              title="Editar"
+                            >
+                              ✏️
+                            </button>
+                          )}
+                          <DeleteTransactionButton transactionId={txn._id} />
+                        </div>
                       </td>
                     </tr>
                   );
@@ -521,6 +534,21 @@ export default function TransactionsPanel({
           </div>
         )}
       </Card>
+
+      {/* Edit Transaction Modal */}
+      <TransactionFormModal
+        isOpen={!!editingTxn}
+        onClose={() => setEditingTxn(null)}
+        onSubmit={async (data) => {
+          if (editingTxn) {
+            await updateTransaction(editingTxn._id, data);
+            setEditingTxn(null);
+          }
+        }}
+        accounts={accounts}
+        categories={categories as any}
+        editingTransaction={editingTxn}
+      />
     </div>
   );
 }

@@ -16,6 +16,7 @@ interface TransactionFormModalProps {
   onSubmit: (data: any) => Promise<void>;
   accounts: IAccount[];
   categories: ICategory[];
+  editingTransaction?: any | null;
 }
 
 const currencyOptions = [
@@ -55,6 +56,7 @@ export default function TransactionFormModal({
   onSubmit,
   accounts,
   categories,
+  editingTransaction = null,
 }: TransactionFormModalProps) {
   const [form, setForm] = useState({
     type: "expense" as "expense" | "income",
@@ -76,23 +78,42 @@ export default function TransactionFormModal({
 
   useEffect(() => {
     if (isOpen) {
-      setForm({
-        type: "expense",
-        accountId: accounts.length > 0 ? accounts[0]._id : "",
-        description: "",
-        originalAmount: "",
-        originalCurrency: "CLP",
-        exchangeRate: "",
-        category: categories.length > 0 ? categories[0].value : "other",
-        customCategory: "",
-        date: new Date().toISOString().split("T")[0],
-        notes: "",
-      });
+      if (editingTransaction) {
+        setForm({
+          type: editingTransaction.type === 'transfer' ? 'expense' : editingTransaction.type,
+          accountId: editingTransaction.accountId || (accounts.length > 0 ? accounts[0]._id : ""),
+          description: editingTransaction.description || "",
+          originalAmount: (editingTransaction.originalAmount ?? editingTransaction.amount ?? "").toString(),
+          originalCurrency: editingTransaction.originalCurrency || "CLP",
+          exchangeRate: editingTransaction.exchangeRate && editingTransaction.exchangeRate !== 1
+            ? editingTransaction.exchangeRate.toString()
+            : "",
+          category: editingTransaction.category || (categories.length > 0 ? categories[0].value : "other"),
+          customCategory: "",
+          date: editingTransaction.date
+            ? new Date(editingTransaction.date).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
+          notes: editingTransaction.notes || "",
+        });
+      } else {
+        setForm({
+          type: "expense",
+          accountId: accounts.length > 0 ? accounts[0]._id : "",
+          description: "",
+          originalAmount: "",
+          originalCurrency: "CLP",
+          exchangeRate: "",
+          category: categories.length > 0 ? categories[0].value : "other",
+          customCategory: "",
+          date: new Date().toISOString().split("T")[0],
+          notes: "",
+        });
+      }
       setIsCustomCategory(false);
       setCustomIcon("📁");
       setError("");
     }
-  }, [isOpen, accounts, categories]);
+  }, [isOpen, accounts, categories, editingTransaction]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -149,7 +170,7 @@ export default function TransactionFormModal({
   const isExpense = form.type === "expense";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nuevo Movimiento" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={editingTransaction ? "✏️ Editar Movimiento" : "Nuevo Movimiento"} size="md">
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <div className="p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-sm">
@@ -422,7 +443,9 @@ export default function TransactionFormModal({
                 : "bg-success hover:bg-success/90 shadow-success/25",
             )}
           >
-            {isExpense ? "↓ Registrar Gasto" : "↑ Registrar Ingreso"}
+            {editingTransaction
+              ? "✓ Guardar Cambios"
+              : isExpense ? "↓ Registrar Gasto" : "↑ Registrar Ingreso"}
           </Button>
         </div>
       </form>
