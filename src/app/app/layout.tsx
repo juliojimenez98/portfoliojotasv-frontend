@@ -15,7 +15,7 @@ export default function AppsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background flex">
+    <div data-app="gastos" className="min-h-screen bg-background flex">
       {/* Sidebar - sticky on the left */}
       <AppSidebar />
 

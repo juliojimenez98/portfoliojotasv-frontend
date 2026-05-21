@@ -91,21 +91,24 @@
 }
 
 /* ========================================
-   APP PALETTES — Gastos (Emerald/Blue)
+   APP PALETTES — Gastos (Teal/Blue)
    ======================================== */
 [data-app="gastos"] {
-  --color-primary: #10b981;
-  --color-primary-light: #34d399;
-  --color-primary-dark: #059669;
+  --color-primary: #0d9488;
+  --color-primary-light: #2dd4bf;
+  --color-primary-dark: #0f766e;
   --color-secondary: #3b82f6;
   --color-secondary-light: #60a5fa;
   --color-accent: #f59e0b;
-  --gradient-primary: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-  --gradient-accent: linear-gradient(135deg, #f59e0b 0%, #10b981 100%);
-  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.15);
+  --gradient-primary: linear-gradient(135deg, #0d9488 0%, #3b82f6 100%);
+  --gradient-accent: linear-gradient(135deg, #f59e0b 0%, #0d9488 100%);
+  --shadow-glow: 0 0 20px rgba(13, 148, 136, 0.15);
 }
 .dark [data-app="gastos"] {
-  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.25);
+  --color-primary: #14b8a6;
+  --color-primary-light: #2dd4bf;
+  --color-primary-dark: #0d9488;
+  --shadow-glow: 0 0 20px rgba(20, 184, 166, 0.25);
 }
 
 /* ========================================

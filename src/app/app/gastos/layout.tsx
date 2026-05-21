@@ -4,7 +4,7 @@ export default function GastosLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div data-app="gastos" className="animate-fade-in">
+    <div className="animate-fade-in">
       {children}
     </div>
   );
