@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Card, { CardHeader, CardTitle } from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import SubscriptionManagementModal from "./SubscriptionManagementModal";
-import ConfirmModal from "@/components/ui/ConfirmModal";
+import ChargeSubscriptionModal from "./ChargeSubscriptionModal";
 import { formatCurrency, cn } from "@/lib/utils";
 import { SUBSCRIPTION_CATEGORY_EMOJIS } from "@/lib/gastos-constants";
 import type { IAccount } from "@/types/account";
@@ -49,25 +49,29 @@ export default function SubscriptionPageContainer({
     setChargeModalSub(sub);
   };
 
-  const handleRegisterCharge = async () => {
+  const handleRegisterCharge = async (
+    amountCLP: number,
+    exchangeRate: number,
+  ) => {
     if (!chargeModalSub) return;
-
+    setIsProcessingId(chargeModalSub._id);
     try {
-      setIsProcessingId(chargeModalSub._id);
       await createTransaction({
         accountId: chargeModalSub.accountId,
         subscriptionId: chargeModalSub._id,
         type: "expense",
         category: chargeModalSub.category || "software",
-        amount: chargeModalSub.amount,
+        // Always store in CLP (converted)
+        amount: amountCLP,
+        originalAmount: chargeModalSub.amount,
+        originalCurrency: chargeModalSub.currency || "CLP",
+        exchangeRate,
         date: new Date().toISOString(),
         description: `Cobro de Suscripción: ${chargeModalSub.name}`,
-        currency: chargeModalSub.currency || "CLP",
       });
       setChargeModalSub(null);
-    } catch (error) {
-      console.error("Error registrando cobro:", error);
-      alert("Ocurrió un error al registrar el cobro.");
+    } catch (error: any) {
+      throw error;
     } finally {
       setIsProcessingId(null);
     }
@@ -110,7 +114,7 @@ export default function SubscriptionPageContainer({
         </div>
         <button
           onClick={() => setSubModal({ open: true, editing: null })}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white text-sm font-medium hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-primary to-secondary text-white text-sm font-medium hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-[0.98]"
         >
           + Nueva Suscripción
         </button>
@@ -169,7 +173,7 @@ export default function SubscriptionPageContainer({
             </p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+          <div className="space-y-2 max-h-125 overflow-y-auto pr-2">
             {subscriptions.map((sub) => {
               const accObj = accounts.find((a) => a._id === sub.accountId);
               const isProcessing = isProcessingId === sub._id;
@@ -276,15 +280,11 @@ export default function SubscriptionPageContainer({
         onSaved={() => setSubModal({ open: false, editing: null })}
       />
 
-      <ConfirmModal
+      <ChargeSubscriptionModal
         isOpen={!!chargeModalSub}
         onClose={() => setChargeModalSub(null)}
         onConfirm={handleRegisterCharge}
-        title={modalContent.title}
-        message={modalContent.message}
-        confirmText={modalContent.confirmText}
-        variant={modalContent.variant}
-        isLoading={!!isProcessingId}
+        sub={chargeModalSub}
       />
     </div>
   );
