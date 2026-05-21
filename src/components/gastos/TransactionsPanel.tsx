@@ -428,6 +428,9 @@ export default function TransactionsPanel({
                   <th className="text-left py-3 px-3 text-xs font-bold text-foreground-muted uppercase tracking-wider hidden sm:table-cell">
                     Fecha
                   </th>
+                  <th className="text-right py-3 px-3 text-xs font-bold text-foreground-muted uppercase tracking-wider hidden xl:table-cell">
+                    Saldo Previo
+                  </th>
                   <th className="text-right py-3 px-3 text-xs font-bold text-foreground-muted uppercase tracking-wider">
                     Monto
                   </th>
@@ -492,6 +495,15 @@ export default function TransactionsPanel({
                         <span className="text-foreground-muted whitespace-nowrap">
                           {dateStr}
                         </span>
+                      </td>
+                      <td className="py-3 px-3 hidden xl:table-cell text-right">
+                        {txn.balanceBefore != null ? (
+                          <span className="text-xs text-foreground-subtle font-mono whitespace-nowrap">
+                            {formatCurrency(txn.balanceBefore)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-foreground-subtle/40">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-right">
                         <span

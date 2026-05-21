@@ -32,11 +32,15 @@ export interface ITransaction {
   accountId: string;
   description: string;
   amount: number;
+  originalCurrency?: string;
+  originalAmount?: number;
+  exchangeRate?: number;
   type: TransactionType;
   category: TransactionCategory;
   date: Date;
   notes?: string;
   subscriptionId?: string;
+  balanceBefore?: number;
   createdAt: Date;
   updatedAt: Date;
 }

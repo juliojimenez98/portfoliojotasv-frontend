@@ -206,13 +206,11 @@ export default function CuentasPage() {
               🔄 Transferir
             </Button>
           )}
-          <Button
-            variant="outline"
-            onClick={handleOpenRecalcPreview}
-            title="Redondea al entero más cercano los balances que tienen decimales por drift de punto flotante"
-          >
+          {/* Corregir Balances — oculto temporalmente
+          <Button variant="outline" onClick={handleOpenRecalcPreview}>
             🔧 Corregir Balances
           </Button>
+          */}
           <Button
             variant={paydayConfig ? "secondary" : "outline"}
             onClick={() => setShowPayday(true)}
