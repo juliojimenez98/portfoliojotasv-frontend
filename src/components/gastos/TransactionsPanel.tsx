@@ -502,7 +502,9 @@ export default function TransactionsPanel({
                             {formatCurrency(txn.balanceBefore)}
                           </span>
                         ) : (
-                          <span className="text-xs text-foreground-subtle/40">—</span>
+                          <span className="text-xs text-foreground-subtle/40">
+                            —
+                          </span>
                         )}
                       </td>
                       <td className="py-3 px-3 text-right">

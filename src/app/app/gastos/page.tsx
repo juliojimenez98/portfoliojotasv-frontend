@@ -438,7 +438,14 @@ export default async function GastosDashboardPage({
                         <p className="text-xs text-foreground-subtle capitalize">
                           {catLabel}
                           {txn.balanceBefore != null && (
-                            <> · <span className="font-mono">Saldo previo: {formatCurrency(txn.balanceBefore)}</span></>
+                            <>
+                              {" "}
+                              ·{" "}
+                              <span className="font-mono">
+                                Saldo previo:{" "}
+                                {formatCurrency(txn.balanceBefore)}
+                              </span>
+                            </>
                           )}
                         </p>
                       </div>

@@ -63,7 +63,14 @@ export default function CuentasPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [recalcPreview, setRecalcPreview] = useState<null | {
-    items: { accountId: string; name: string; oldBalance: number; newBalance: number; diff: number; hasChange: boolean }[];
+    items: {
+      accountId: string;
+      name: string;
+      oldBalance: number;
+      newBalance: number;
+      diff: number;
+      hasChange: boolean;
+    }[];
     loading: boolean;
     applying: boolean;
   }>(null);
@@ -144,14 +151,14 @@ export default function CuentasPage() {
 
   const handleRecalculate = async () => {
     if (!recalcPreview) return;
-    setRecalcPreview((p) => p && ({ ...p, applying: true }));
+    setRecalcPreview((p) => p && { ...p, applying: true });
     try {
       await recalculateBalances();
       await fetchAccounts();
       setRecalcPreview(null);
     } catch {
       alert("Error al corregir balances");
-      setRecalcPreview((p) => p && ({ ...p, applying: false }));
+      setRecalcPreview((p) => p && { ...p, applying: false });
     }
   };
 
@@ -461,24 +468,34 @@ export default function CuentasPage() {
             <p className="font-bold mb-1">⚠️ ¿Qué hace esto?</p>
             <p className="text-foreground-muted text-xs leading-relaxed">
               Redondea al entero más cercano los balances que tienen decimales
-              por errores de punto flotante (ej: <code>14995.0001 → 14995</code>).
-              <strong className="text-foreground"> No recalcula desde transacciones</strong> — solo
-              elimina la fracción decimal del balance actual.
+              por errores de punto flotante (ej: <code>14995.0001 → 14995</code>
+              ).
+              <strong className="text-foreground">
+                {" "}
+                No recalcula desde transacciones
+              </strong>{" "}
+              — solo elimina la fracción decimal del balance actual.
             </p>
           </div>
 
           {recalcPreview?.loading ? (
             <div className="flex items-center justify-center py-8 gap-3">
               <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              <span className="text-sm text-foreground-muted">Calculando impacto...</span>
+              <span className="text-sm text-foreground-muted">
+                Calculando impacto...
+              </span>
             </div>
           ) : (
             <>
               {recalcPreview?.items.filter((i) => i.hasChange).length === 0 ? (
                 <div className="text-center py-6">
                   <div className="text-4xl mb-2">✅</div>
-                  <p className="text-sm font-semibold text-foreground">Todos los balances ya son enteros</p>
-                  <p className="text-xs text-foreground-muted mt-1">No hay nada que corregir.</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Todos los balances ya son enteros
+                  </p>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    No hay nada que corregir.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -494,18 +511,23 @@ export default function CuentasPage() {
                           : "border-border bg-background-elevated opacity-50"
                       }`}
                     >
-                      <span className="text-sm font-medium text-foreground">{item.name}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {item.name}
+                      </span>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-foreground-muted line-through">
                           {formatCurrency(item.oldBalance)}
                         </span>
                         <span className="text-foreground-subtle">→</span>
-                        <span className={`font-bold ${item.hasChange ? "text-success" : "text-foreground-muted"}`}>
+                        <span
+                          className={`font-bold ${item.hasChange ? "text-success" : "text-foreground-muted"}`}
+                        >
                           {formatCurrency(item.newBalance)}
                         </span>
                         {item.hasChange && (
                           <span className="text-[10px] bg-warning/15 text-warning px-1.5 py-0.5 rounded-full font-mono">
-                            {item.diff > 0 ? "+" : ""}{item.diff.toFixed(4)}
+                            {item.diff > 0 ? "+" : ""}
+                            {item.diff.toFixed(4)}
                           </span>
                         )}
                       </div>

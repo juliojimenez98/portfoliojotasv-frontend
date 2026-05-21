@@ -1,4 +1,4 @@
-export type TransactionType = 'income' | 'expense' | 'transfer';
+export type TransactionType = "income" | "expense" | "transfer";
 
 export type TransactionCategory = string;
 
@@ -10,21 +10,25 @@ export interface ICategory {
   isDefault?: boolean;
 }
 
-export const TRANSACTION_CATEGORIES: { value: string; label: string; icon: string }[] = [
-  { value: 'food', label: 'Comida', icon: '🍔' },
-  { value: 'transport', label: 'Transporte', icon: '🚗' },
-  { value: 'entertainment', label: 'Entretenimiento', icon: '🎬' },
-  { value: 'health', label: 'Salud', icon: '💊' },
-  { value: 'education', label: 'Educación', icon: '🎓' },
-  { value: 'housing', label: 'Vivienda', icon: '🏠' },
-  { value: 'utilities', label: 'Servicios', icon: '💡' },
-  { value: 'shopping', label: 'Compras', icon: '🛍️' },
-  { value: 'travel', label: 'Viajes', icon: '✈️' },
-  { value: 'personal', label: 'Personal', icon: '👤' },
-  { value: 'atm', label: 'Retiro Cajero', icon: '🏧' },
-  { value: 'delivery', label: 'Delivery', icon: '🏍️' },
-  { value: 'shipping', label: 'Pedidos / Envíos', icon: '🚚' },
-  { value: 'other', label: 'Otro', icon: '📁' },
+export const TRANSACTION_CATEGORIES: {
+  value: string;
+  label: string;
+  icon: string;
+}[] = [
+  { value: "food", label: "Comida", icon: "🍔" },
+  { value: "transport", label: "Transporte", icon: "🚗" },
+  { value: "entertainment", label: "Entretenimiento", icon: "🎬" },
+  { value: "health", label: "Salud", icon: "💊" },
+  { value: "education", label: "Educación", icon: "🎓" },
+  { value: "housing", label: "Vivienda", icon: "🏠" },
+  { value: "utilities", label: "Servicios", icon: "💡" },
+  { value: "shopping", label: "Compras", icon: "🛍️" },
+  { value: "travel", label: "Viajes", icon: "✈️" },
+  { value: "personal", label: "Personal", icon: "👤" },
+  { value: "atm", label: "Retiro Cajero", icon: "🏧" },
+  { value: "delivery", label: "Delivery", icon: "🏍️" },
+  { value: "shipping", label: "Pedidos / Envíos", icon: "🚚" },
+  { value: "other", label: "Otro", icon: "📁" },
 ];
 
 export interface ITransaction {
