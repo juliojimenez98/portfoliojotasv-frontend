@@ -18,6 +18,7 @@ import {
   depositToAccount,
   transferBetweenAccounts,
   recalculateBalances,
+  previewRoundBalances,
 } from "@/actions/accounts";
 import { getPaydayConfig } from "@/actions/users";
 import type { PaydayConfig } from "@/types/user";
@@ -26,6 +27,7 @@ export const dynamic = "force-dynamic";
 
 import { formatCurrency } from "@/lib/utils";
 import type { IAccount } from "@/types/account";
+import Modal from "@/components/ui/Modal";
 const typeLabels: Record<string, string> = {
   credit_card: "Tarjeta de Crédito",
   debit: "Débito",
@@ -60,6 +62,11 @@ export default function CuentasPage() {
   const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isRecalculating, setIsRecalculating] = useState(false);
+  const [recalcPreview, setRecalcPreview] = useState<null | {
+    items: { accountId: string; name: string; oldBalance: number; newBalance: number; diff: number; hasChange: boolean }[];
+    loading: boolean;
+    applying: boolean;
+  }>(null);
 
   // Payday config
   const [paydayConfig, setPaydayConfig] = useState<PaydayConfig | null>(null);
@@ -124,15 +131,27 @@ export default function CuentasPage() {
     await fetchAccounts();
   };
 
+  const handleOpenRecalcPreview = async () => {
+    setRecalcPreview({ items: [], loading: true, applying: false });
+    try {
+      const data = await previewRoundBalances();
+      setRecalcPreview({ items: data, loading: false, applying: false });
+    } catch {
+      setRecalcPreview(null);
+      alert("Error al obtener la vista previa");
+    }
+  };
+
   const handleRecalculate = async () => {
-    setIsRecalculating(true);
+    if (!recalcPreview) return;
+    setRecalcPreview((p) => p && ({ ...p, applying: true }));
     try {
       await recalculateBalances();
       await fetchAccounts();
+      setRecalcPreview(null);
     } catch {
-      alert("Error al recalcular balances");
-    } finally {
-      setIsRecalculating(false);
+      alert("Error al corregir balances");
+      setRecalcPreview((p) => p && ({ ...p, applying: false }));
     }
   };
 
@@ -189,11 +208,10 @@ export default function CuentasPage() {
           )}
           <Button
             variant="outline"
-            onClick={handleRecalculate}
-            disabled={isRecalculating}
-            title="Recalcula todos los balances desde las transacciones registradas para corregir cualquier desajuste"
+            onClick={handleOpenRecalcPreview}
+            title="Redondea al entero más cercano los balances que tienen decimales por drift de punto flotante"
           >
-            {isRecalculating ? "⏳ Recalculando..." : "🔧 Corregir Balances"}
+            🔧 Corregir Balances
           </Button>
           <Button
             variant={paydayConfig ? "secondary" : "outline"}
@@ -432,6 +450,101 @@ export default function CuentasPage() {
         currentConfig={paydayConfig}
         onSaved={(cfg) => setPaydayConfig(cfg)}
       />
+
+      {/* Recalculate balances preview modal */}
+      <Modal
+        isOpen={!!recalcPreview}
+        onClose={() => !recalcPreview?.applying && setRecalcPreview(null)}
+        title="🔧 Corregir Balances"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="p-3 rounded-xl bg-warning/10 border border-warning/30 text-sm text-warning">
+            <p className="font-bold mb-1">⚠️ ¿Qué hace esto?</p>
+            <p className="text-foreground-muted text-xs leading-relaxed">
+              Redondea al entero más cercano los balances que tienen decimales
+              por errores de punto flotante (ej: <code>14995.0001 → 14995</code>).
+              <strong className="text-foreground"> No recalcula desde transacciones</strong> — solo
+              elimina la fracción decimal del balance actual.
+            </p>
+          </div>
+
+          {recalcPreview?.loading ? (
+            <div className="flex items-center justify-center py-8 gap-3">
+              <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <span className="text-sm text-foreground-muted">Calculando impacto...</span>
+            </div>
+          ) : (
+            <>
+              {recalcPreview?.items.filter((i) => i.hasChange).length === 0 ? (
+                <div className="text-center py-6">
+                  <div className="text-4xl mb-2">✅</div>
+                  <p className="text-sm font-semibold text-foreground">Todos los balances ya son enteros</p>
+                  <p className="text-xs text-foreground-muted mt-1">No hay nada que corregir.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-foreground-muted uppercase tracking-wider">
+                    Cambios a aplicar
+                  </p>
+                  {recalcPreview?.items.map((item) => (
+                    <div
+                      key={item.accountId}
+                      className={`flex items-center justify-between p-3 rounded-xl border ${
+                        item.hasChange
+                          ? "border-warning/30 bg-warning/5"
+                          : "border-border bg-background-elevated opacity-50"
+                      }`}
+                    >
+                      <span className="text-sm font-medium text-foreground">{item.name}</span>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-foreground-muted line-through">
+                          {formatCurrency(item.oldBalance)}
+                        </span>
+                        <span className="text-foreground-subtle">→</span>
+                        <span className={`font-bold ${item.hasChange ? "text-success" : "text-foreground-muted"}`}>
+                          {formatCurrency(item.newBalance)}
+                        </span>
+                        {item.hasChange && (
+                          <span className="text-[10px] bg-warning/15 text-warning px-1.5 py-0.5 rounded-full font-mono">
+                            {item.diff > 0 ? "+" : ""}{item.diff.toFixed(4)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setRecalcPreview(null)}
+                  disabled={recalcPreview?.applying}
+                  className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground-muted hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                {recalcPreview?.items.some((i) => i.hasChange) && (
+                  <button
+                    onClick={handleRecalculate}
+                    disabled={recalcPreview?.applying}
+                    className="flex-1 py-2.5 rounded-xl bg-warning text-white text-sm font-bold hover:bg-warning/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {recalcPreview?.applying ? (
+                      <>
+                        <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                        Aplicando...
+                      </>
+                    ) : (
+                      "✓ Aplicar corrección"
+                    )}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

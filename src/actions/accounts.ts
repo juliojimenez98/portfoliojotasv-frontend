@@ -67,6 +67,11 @@ export async function depositToAccount(id: string, amount: number, description?:
   return res.data;
 }
 
+export async function previewRoundBalances() {
+  const res = await fetchWithAuth('/api/accounts/recalculate-balances/preview');
+  return res.data as { accountId: string; name: string; oldBalance: number; newBalance: number; diff: number; hasChange: boolean }[];
+}
+
 export async function recalculateBalances() {
   const res = await fetchWithAuth('/api/accounts/recalculate-balances', {
     method: 'POST',
