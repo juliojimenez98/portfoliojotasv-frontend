@@ -42,11 +42,26 @@ export default function Modal({
   useEffect(() => {
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
+      // Lock body scroll — works on desktop and most Android
       document.body.style.overflow = "hidden";
+      // iOS Safari fix: also lock position to prevent bounce scroll bleed-through
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
     }
     return () => {
       document.removeEventListener("keydown", handleEscape);
+      // Restore body scroll and position
+      const top = document.body.style.top;
       document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      // Restore scroll position after unlocking
+      if (top) {
+        window.scrollTo(0, -parseInt(top || "0", 10));
+      }
     };
   }, [isOpen, handleEscape]);
 
@@ -54,9 +69,9 @@ export default function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex flex-col justify-end md:items-center md:justify-center md:p-4 md:overflow-y-auto">
-      {/* Backdrop */}
+      {/* Backdrop — touch-action:none stops iOS scroll bleed */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-md animate-fade-in"
+        className="fixed inset-0 bg-black/75 backdrop-blur-md animate-fade-in touch-none"
         onClick={onClose}
       />
 
@@ -105,8 +120,8 @@ export default function Modal({
           </div>
         )}
 
-        {/* Body – on mobile uses most of the viewport height */}
-        <div className="px-4 py-4 md:px-6 overflow-y-auto max-h-[85dvh] md:max-h-[80vh]">
+        {/* Body – on mobile uses most of the viewport height, overscroll-contain stops scroll chaining to page behind */}
+        <div className="px-4 py-4 md:px-6 overflow-y-auto overscroll-contain max-h-[85dvh] md:max-h-[80vh]">
           {children}
         </div>
       </div>
