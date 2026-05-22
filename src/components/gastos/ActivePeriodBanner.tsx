@@ -2,14 +2,20 @@
 
 import React, { useState } from "react";
 import type { ISpendPeriod } from "@/types/period";
+import type { PaydayConfig } from "@/types/user";
+import type { IAccount } from "@/types/account";
 import PaydayReceiveModal from "./PaydayReceiveModal";
 
 interface ActivePeriodBannerProps {
   initialPeriod: ISpendPeriod | null;
+  paydayConfig?: PaydayConfig | null;
+  accounts?: IAccount[];
 }
 
 export default function ActivePeriodBanner({
   initialPeriod,
+  paydayConfig,
+  accounts = [],
 }: ActivePeriodBannerProps) {
   const [activePeriod, setActivePeriod] = useState<ISpendPeriod | null>(
     initialPeriod,
@@ -90,6 +96,8 @@ export default function ActivePeriodBanner({
           setActivePeriod(newPeriod);
           setShowModal(false);
         }}
+        paydayConfig={paydayConfig}
+        accounts={accounts}
       />
     </>
   );

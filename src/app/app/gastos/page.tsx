@@ -15,6 +15,8 @@ import {
   getActiveSubscriptionsCost,
 } from "@/actions/subscriptions";
 import { getActivePeriod } from "@/actions/periods";
+import { getPaydayConfig } from "@/actions/users";
+import type { PaydayConfig } from "@/types/user";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +52,7 @@ export default async function GastosDashboardPage({
   let categories: any[] = [];
   let subscriptions: any[] = [];
   let activePeriod: ISpendPeriod | null = null;
+  let paydayConfig: PaydayConfig | null = null;
 
   try {
     [
@@ -62,6 +65,7 @@ export default async function GastosDashboardPage({
       categories,
       subscriptions,
       activePeriod,
+      paydayConfig,
     ] = await Promise.all([
       getAccounts(),
       getMonthlyExpenseSummary(
@@ -75,6 +79,7 @@ export default async function GastosDashboardPage({
       getTransactionCategories(),
       getSubscriptions(),
       getActivePeriod().catch(() => null),
+      getPaydayConfig().catch(() => null),
     ]);
   } catch {
     // DB not connected — show empty state
@@ -216,7 +221,7 @@ export default async function GastosDashboardPage({
       </div>
 
       {/* Active Period Banner */}
-      <ActivePeriodBanner initialPeriod={activePeriod} />
+      <ActivePeriodBanner initialPeriod={activePeriod} paydayConfig={paydayConfig} accounts={accounts} />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
