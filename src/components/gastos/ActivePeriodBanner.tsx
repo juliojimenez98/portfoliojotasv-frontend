@@ -94,7 +94,7 @@ export default function ActivePeriodBanner({
         activePeriod={activePeriod}
         onPeriodStarted={(newPeriod) => {
           setActivePeriod(newPeriod);
-          setShowModal(false);
+          // Don't close here — the modal handles its own multi-step flow (deposit → summary)
         }}
         paydayConfig={paydayConfig}
         accounts={accounts}
