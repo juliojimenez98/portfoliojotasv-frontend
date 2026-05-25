@@ -54,6 +54,7 @@ export default function AccountFormModal({
     bankName: '',
     currency: 'CLP',
     balance: 0,
+    creditLimit: 0,
     color: '#6366f1',
     refreshType: 'manual' as RefreshType,
   });
@@ -69,6 +70,7 @@ export default function AccountFormModal({
         bankName: account.bankName || '',
         currency: account.currency,
         balance: account.balance,
+        creditLimit: account.creditLimit || 0,
         color: account.color,
         refreshType: account.refreshType || 'manual',
       });
@@ -80,6 +82,7 @@ export default function AccountFormModal({
         bankName: '',
         currency: 'CLP',
         balance: 0,
+        creditLimit: 0,
         color: '#6366f1',
         refreshType: 'manual',
       });
@@ -91,7 +94,7 @@ export default function AccountFormModal({
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: name === 'balance' ? parseFloat(value) || 0 : value,
+      [name]: name === 'balance' || name === 'creditLimit' ? parseFloat(value) || 0 : value,
     }));
   };
 
@@ -104,7 +107,14 @@ export default function AccountFormModal({
     setLoading(true);
     setError('');
     try {
-      await onSubmit(form);
+      const payload = {
+        ...form,
+        creditLimit: form.type === 'credit_card' ? form.creditLimit : undefined,
+      };
+      if (form.type === 'credit_card' && !isEdit && !form.balance) {
+        payload.balance = form.creditLimit;
+      }
+      await onSubmit(payload);
       onClose();
     } catch (err: any) {
       setError(err.message || 'Error al guardar la cuenta');
@@ -156,6 +166,16 @@ export default function AccountFormModal({
           />
         </div>
 
+        {form.type === 'credit_card' && (
+          <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-xs text-danger space-y-1">
+            <p className="font-bold">💳 Cuenta de tipo Tarjeta de Crédito</p>
+            <p className="text-foreground-muted leading-relaxed">
+              Las tarjetas de crédito **no forman parte de tus activos/dinero disponible**. 
+              Al registrar compras, se descontará del cupo disponible y se mostrará cuánto has gastado en números rojos.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             label="Moneda"
@@ -174,16 +194,39 @@ export default function AccountFormModal({
           />
         </div>
 
-        {!isEdit && (
-          <Input
-            label="Balance inicial"
-            name="balance"
-            type="number"
-            step={form.currency === 'CLP' ? '1' : '0.01'}
-            value={form.balance.toString()}
-            onChange={handleChange}
-            placeholder="0"
-          />
+        {form.type === 'credit_card' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Cupo total (Límite de crédito) *"
+              name="creditLimit"
+              type="number"
+              step={form.currency === 'CLP' ? '1' : '0.01'}
+              value={form.creditLimit.toString()}
+              onChange={handleChange}
+              placeholder="0"
+            />
+            <Input
+              label={isEdit ? "Cupo disponible (Balance actual) *" : "Cupo disponible inicial (opcional)"}
+              name="balance"
+              type="number"
+              step={form.currency === 'CLP' ? '1' : '0.01'}
+              value={form.balance.toString()}
+              onChange={handleChange}
+              placeholder={isEdit ? "0" : "Dejar en blanco para usar cupo total"}
+            />
+          </div>
+        ) : (
+          !isEdit && (
+            <Input
+              label="Balance inicial"
+              name="balance"
+              type="number"
+              step={form.currency === 'CLP' ? '1' : '0.01'}
+              value={form.balance.toString()}
+              onChange={handleChange}
+              placeholder="0"
+            />
+          )
         )}
 
         {/* Color picker */}

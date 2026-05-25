@@ -253,7 +253,9 @@ export default function TransactionFormModal({
                       {acc.name}
                     </p>
                     <p className="text-[11px] text-foreground-subtle truncate">
-                      {formatCurrency(acc.balance, acc.currency)}
+                      {acc.type === "credit_card"
+                        ? `Cupo: ${formatCurrency(acc.balance, acc.currency)}`
+                        : formatCurrency(acc.balance, acc.currency)}
                     </p>
                   </div>
                   {isSelected && (

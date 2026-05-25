@@ -99,7 +99,9 @@ export default function CuentasPage() {
       .finally(() => setPaydayLoaded(true));
   }, [fetchAccounts]);
 
-  const total = accounts.reduce((a, c) => a + c.balance, 0);
+  const total = accounts
+    .filter((a) => a.type !== "credit_card")
+    .reduce((a, c) => a + c.balance, 0);
 
   // Handlers
   const handleCreate = async (data: any) => {
@@ -351,20 +353,47 @@ export default function CuentasPage() {
               )}
 
               {/* Balance */}
-              <div className="mt-4">
-                <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
-                  Balance
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {formatCurrency(acc.balance)}
-                </p>
-              </div>
+              {acc.type === "credit_card" ? (
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                      Gastado
+                    </p>
+                    <p className="text-xl font-bold text-danger">
+                      -{formatCurrency(Math.max(0, (acc.creditLimit || 0) - acc.balance))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                      Cupo Disp.
+                    </p>
+                    <p className="text-xl font-bold text-foreground">
+                      {formatCurrency(acc.balance)}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                    Balance
+                  </p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatCurrency(acc.balance)}
+                  </p>
+                </div>
+              )}
 
               {/* Meta info */}
               <div className="flex items-center gap-3 mt-3 text-xs text-foreground-subtle">
                 <span>{refreshLabels[acc.refreshType] || acc.refreshType}</span>
                 <span>·</span>
                 <span>{acc.currency}</span>
+                {acc.type === "credit_card" && (
+                  <>
+                    <span>·</span>
+                    <span>Cupo Total: {formatCurrency(acc.creditLimit || 0)}</span>
+                  </>
+                )}
               </div>
 
               {/* Actions */}

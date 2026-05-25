@@ -128,7 +128,9 @@ export default async function GastosDashboardPage({
   const recent = displayedTransactions
     .filter((t) => isInRange(t.date))
     .slice(0, 15);
-  const totalBalance = accounts.reduce((acc, a) => acc + a.balance, 0);
+  const totalBalance = accounts
+    .filter((a) => a.type !== "credit_card")
+    .reduce((acc, a) => acc + a.balance, 0);
 
   // ── Gastos por cuenta (period-aware) ────────────────────────────────────
   const accountExpenseMap: Record<
@@ -321,9 +323,20 @@ export default async function GastosDashboardPage({
                         </p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {formatCurrency(account.balance)}
-                    </p>
+                    {account.type === "credit_card" ? (
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-danger">
+                          -{formatCurrency(Math.max(0, (account.creditLimit || 0) - account.balance))}
+                        </p>
+                        <p className="text-[10px] text-foreground-subtle">
+                          Cupo: {formatCurrency(account.balance)}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm font-semibold text-foreground">
+                        {formatCurrency(account.balance)}
+                      </p>
+                    )}
                   </Link>
                 );
               })}

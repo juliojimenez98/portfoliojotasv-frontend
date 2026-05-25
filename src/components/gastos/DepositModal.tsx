@@ -58,7 +58,7 @@ export default function DepositModal({
   if (!account) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Abonar a Cuenta" size="sm">
+    <Modal isOpen={isOpen} onClose={handleClose} title={account.type === 'credit_card' ? "Pagar/Abonar Tarjeta" : "Abonar a Cuenta"} size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Account info */}
         <div className="p-3 rounded-xl bg-background-elevated border border-border">
@@ -72,7 +72,7 @@ export default function DepositModal({
             <div>
               <p className="font-semibold text-foreground text-sm">{account.name}</p>
               <p className="text-xs text-foreground-subtle">
-                Balance actual: <span className="font-medium text-foreground">{formatCurrency(account.balance, account.currency)}</span>
+                {account.type === 'credit_card' ? 'Cupo disponible' : 'Balance actual'}: <span className="font-medium text-foreground">{formatCurrency(account.balance, account.currency)}</span>
               </p>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function DepositModal({
         )}
 
         <Input
-          label="Monto a abonar *"
+          label={account.type === 'credit_card' ? "Monto a pagar/abonar *" : "Monto a abonar *"}
           type="number"
           step={account.currency === 'CLP' ? '1' : '0.01'}
           min={account.currency === 'CLP' ? '1' : '0.01'}
@@ -103,7 +103,7 @@ export default function DepositModal({
 
         {amount && parseFloat(amount) > 0 && (
           <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-sm">
-            <p className="text-foreground-muted">Nuevo balance:</p>
+            <p className="text-foreground-muted">{account.type === 'credit_card' ? "Nuevo cupo disponible:" : "Nuevo balance:"}</p>
             <p className="text-lg font-bold text-green-400">
               {formatCurrency(account.balance + parseFloat(amount), account.currency)}
             </p>
