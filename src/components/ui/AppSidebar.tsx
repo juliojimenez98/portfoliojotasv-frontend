@@ -16,22 +16,15 @@ const gastosNavItems = [
   { href: "/app/gastos/configuracion", label: "Configuración", icon: "⚙️" },
 ];
 
-const pollaNavItems = [
-  { href: "/app/polla_futbolera", label: "Mis Grupos", icon: "⚽" },
-];
-
 export default function AppSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const isPolla = pathname.startsWith("/app/polla_futbolera");
-  const navItems = isPolla ? pollaNavItems : gastosNavItems;
-  const mobileNavItems = isPolla
-    ? pollaNavItems
-    : gastosNavItems.filter(
-        (item) => item.href !== "/app/gastos/configuracion",
-      );
+  const navItems = gastosNavItems;
+  const mobileNavItems = gastosNavItems.filter(
+    (item) => item.href !== "/app/gastos/configuracion",
+  );
 
   return (
     <>
@@ -75,7 +68,7 @@ export default function AppSidebar() {
           <div className="flex flex-col gap-1 px-3">
             {!isCollapsed && (
               <p className="text-xs font-bold text-foreground-muted uppercase tracking-wider mb-2 px-3">
-                {isPolla ? "Polla Futbolera" : "Finanzas"}
+                Finanzas
               </p>
             )}
             <nav className="flex flex-col gap-1.5">
@@ -119,38 +112,7 @@ export default function AppSidebar() {
 
         {/* Footer Area */}
         <div className="shrink-0 border-t border-border/60 p-3 flex flex-col gap-2">
-          {/* Cross-app navigation */}
-          <Link
-            href={isPolla ? "/app/gastos" : "/app/polla_futbolera"}
-            title={
-              isCollapsed
-                ? isPolla
-                  ? "Ir a Gastos"
-                  : "Polla Futbolera"
-                : undefined
-            }
-            className={cn(
-              "flex items-center rounded-xl font-medium transition-all duration-200 group",
-              isCollapsed ? "justify-center p-3" : "gap-3 px-3 py-2",
-              "text-foreground-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5",
-            )}
-          >
-            <span
-              className={cn("shrink-0", isCollapsed ? "text-xl" : "text-lg")}
-            >
-              {isPolla ? "💸" : "⚽"}
-            </span>
-            {!isCollapsed && (
-              <span className="whitespace-nowrap">
-                {isPolla ? "Ir a Gastos" : "Polla Futbolera"}
-              </span>
-            )}
-            {isCollapsed && (
-              <span className="absolute left-full ml-4 px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
-                {isPolla ? "Ir a Gastos" : "Polla Futbolera"}
-              </span>
-            )}
-          </Link>
+          {/* Cross-app navigation removed — polla is not in sidebar yet */}
           <Link
             href="/"
             title={isCollapsed ? "Volver al Home" : undefined}
