@@ -45,7 +45,9 @@ export default function TransferModal({
 
   const accountOptions = accounts.map((a) => ({
     value: a._id,
-    label: `${a.name} (${formatCurrency(a.balance, a.currency)})`,
+    label: a.type === 'credit_card' 
+      ? `${a.name} (Cupo: ${formatCurrency(a.balance, a.currency)})`
+      : `${a.name} (${formatCurrency(a.balance, a.currency)})`,
   }));
 
   const destinationOptions = accountOptions.filter((a) => a.value !== fromId);
@@ -67,7 +69,7 @@ export default function TransferModal({
       return;
     }
     if (fromAccount && numAmount > fromAccount.balance) {
-      setError('Fondos insuficientes en la cuenta de origen');
+      setError(fromAccount.type === 'credit_card' ? 'Cupo insuficiente en la tarjeta de origen' : 'Fondos insuficientes en la cuenta de origen');
       return;
     }
 
