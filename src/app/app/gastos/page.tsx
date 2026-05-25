@@ -221,7 +221,11 @@ export default async function GastosDashboardPage({
       </div>
 
       {/* Active Period Banner */}
-      <ActivePeriodBanner initialPeriod={activePeriod} paydayConfig={paydayConfig} accounts={accounts} />
+      <ActivePeriodBanner
+        initialPeriod={activePeriod}
+        paydayConfig={paydayConfig}
+        accounts={accounts}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">

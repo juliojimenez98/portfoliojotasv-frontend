@@ -28,7 +28,9 @@ export default function PaydayReceiveModal({
   paydayConfig,
   accounts = [],
 }: PaydayReceiveModalProps) {
-  const [step, setStep] = useState<"confirm" | "deposit" | "summary">("confirm");
+  const [step, setStep] = useState<"confirm" | "deposit" | "summary">(
+    "confirm",
+  );
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -256,7 +258,10 @@ export default function PaydayReceiveModal({
               </p>
               <p className="text-xs text-foreground-subtle">
                 Saldo actual:{" "}
-                {formatCurrency(depositAccount.balance, depositAccount.currency)}
+                {formatCurrency(
+                  depositAccount.balance,
+                  depositAccount.currency,
+                )}
               </p>
             </div>
           )}
@@ -265,20 +270,25 @@ export default function PaydayReceiveModal({
             <label className="text-xs font-medium text-foreground-muted block mb-1.5">
               Monto a abonar
               {paydayConfig?.currency && paydayConfig.currency !== "CLP" && (
-                <span className="ml-1 text-primary">({paydayConfig.currency})</span>
+                <span className="ml-1 text-primary">
+                  ({paydayConfig.currency})
+                </span>
               )}
             </label>
             <input
               type="number"
               value={depositAmount}
               onChange={(e) => setDepositAmount(e.target.value)}
-              placeholder={paydayConfig?.amount ? String(paydayConfig.amount) : "0"}
+              placeholder={
+                paydayConfig?.amount ? String(paydayConfig.amount) : "0"
+              }
               className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
               min="1"
             />
             {paydayConfig?.amount && (
               <p className="text-xs text-foreground-subtle mt-1">
-                Monto configurado: {formatCurrency(paydayConfig.amount, paydayConfig.currency)}
+                Monto configurado:{" "}
+                {formatCurrency(paydayConfig.amount, paydayConfig.currency)}
               </p>
             )}
           </div>
