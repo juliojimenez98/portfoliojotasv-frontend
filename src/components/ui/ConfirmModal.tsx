@@ -42,16 +42,11 @@ export default function ConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end md:items-center md:justify-center md:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       {/* Backdrop clickable area for closing */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative bg-background border border-border w-full max-w-sm rounded-t-3xl md:rounded-2xl shadow-xl overflow-hidden animate-slide-up md:animate-fade-in">
-        {/* Drag handle (mobile only) */}
-        <div className="md:hidden flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-border rounded-full" />
-        </div>
-
+      <div className="relative bg-background border border-border w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-fade-in">
         <div className="p-6">
           <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
           <p className="text-sm text-foreground-muted leading-relaxed">
@@ -59,7 +54,7 @@ export default function ConfirmModal({
           </p>
         </div>
 
-        <div className="px-6 py-4 pb-8 md:pb-4 bg-background-elevated border-t border-border flex justify-end gap-3">
+        <div className="px-6 py-4 bg-background-elevated border-t border-border flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}

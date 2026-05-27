@@ -28,12 +28,14 @@ export default function CategoryManagementModal({
   // State for creating new category
   const [newLabel, setNewLabel] = useState('');
   const [newIcon, setNewIcon] = useState('📁');
+  const [newLimit, setNewLimit] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   // State for editing existing category
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
   const [editIcon, setEditIcon] = useState('');
+  const [editLimit, setEditLimit] = useState('');
   const [isEditingLoading, setIsEditingLoading] = useState(false);
 
   const [error, setError] = useState('');
@@ -47,9 +49,14 @@ export default function CategoryManagementModal({
     setIsCreating(true);
     setError('');
     try {
-      await createCategory({ label: newLabel.trim(), icon: newIcon });
+      await createCategory({ 
+        label: newLabel.trim(), 
+        icon: newIcon, 
+        limit: newLimit ? parseFloat(newLimit) : undefined 
+      });
       setNewLabel('');
       setNewIcon('📁');
+      setNewLimit('');
     } catch (err: any) {
       setError(err.message || 'Error al crear la categoría');
     } finally {
@@ -61,6 +68,7 @@ export default function CategoryManagementModal({
     setEditingId(cat._id);
     setEditLabel(cat.label);
     setEditIcon(cat.icon || '📁');
+    setEditLimit(cat.limit ? cat.limit.toString() : '');
     setError('');
   };
 
@@ -69,7 +77,11 @@ export default function CategoryManagementModal({
     setIsEditingLoading(true);
     setError('');
     try {
-      await updateCategory(id, { label: editLabel.trim(), icon: editIcon });
+      await updateCategory(id, { 
+        label: editLabel.trim(), 
+        icon: editIcon, 
+        limit: editLimit ? parseFloat(editLimit) : null 
+      });
       setEditingId(null);
     } catch (err: any) {
       setError(err.message || 'Error al actualizar la categoría');
@@ -104,13 +116,22 @@ export default function CategoryManagementModal({
         {/* Create New Category Form */}
         <form onSubmit={handleCreate} className="p-4 rounded-xl bg-background-elevated border border-border space-y-3">
           <h3 className="text-sm font-semibold text-foreground">✨ Crear Nueva Categoría</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
             <div className="sm:col-span-2">
               <Input
                 label="Nombre *"
                 value={newLabel}
                 onChange={(e) => setNewLabel(e.target.value)}
                 placeholder="Ej: Suscripciones, Mascotas..."
+              />
+            </div>
+            <div>
+              <Input
+                label="Límite Mensual (CLP)"
+                type="number"
+                value={newLimit}
+                onChange={(e) => setNewLimit(e.target.value)}
+                placeholder="Opcional. Ej: 30000"
               />
             </div>
             <div>
@@ -163,12 +184,21 @@ export default function CategoryManagementModal({
               if (isEditing) {
                 return (
                   <div key={cat._id} className="p-3 rounded-lg bg-background-elevated border border-primary space-y-3 animate-fade-in">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-2">
                         <Input
                           label="Nombre"
                           value={editLabel}
                           onChange={(e) => setEditLabel(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          label="Límite Mensual (CLP)"
+                          type="number"
+                          value={editLimit}
+                          onChange={(e) => setEditLimit(e.target.value)}
+                          placeholder="Sin límite"
                         />
                       </div>
                       <div>
@@ -223,11 +253,18 @@ export default function CategoryManagementModal({
                     </span>
                     <div>
                       <p className="text-sm font-medium text-foreground">{cat.label}</p>
-                      {cat.isDefault && (
-                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                          Sistema
-                        </span>
-                      )}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                        {cat.isDefault && (
+                          <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                            Sistema
+                          </span>
+                        )}
+                        {cat.limit ? (
+                          <span className="text-[10px] bg-warning/15 text-warning-light px-2 py-0.5 rounded-full font-semibold border border-warning/15">
+                            Límite: ${cat.limit.toLocaleString('es-CL')} CLP
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">

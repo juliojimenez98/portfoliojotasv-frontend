@@ -61,7 +61,7 @@ export async function deleteTransaction(id: string) {
   revalidatePath("/app/gastos");
 }
 
-export async function createCategory(data: { label: string; icon: string }) {
+export async function createCategory(data: { label: string; icon: string; limit?: number }) {
   const res = await fetchWithAuth("/api/transactions/categories", {
     method: "POST",
     body: JSON.stringify(data),
@@ -72,7 +72,7 @@ export async function createCategory(data: { label: string; icon: string }) {
 
 export async function updateCategory(
   id: string,
-  data: { label?: string; icon?: string },
+  data: { label?: string; icon?: string; limit?: number | null },
 ) {
   const res = await fetchWithAuth(`/api/transactions/categories/${id}`, {
     method: "PUT",

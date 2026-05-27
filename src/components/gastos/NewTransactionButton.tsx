@@ -6,16 +6,18 @@ import TransactionFormModal from "./TransactionFormModal";
 import CategoryManagementModal from "./CategoryManagementModal";
 import { createTransaction } from "@/actions/transactions";
 import type { IAccount } from "@/types/account";
-import type { ICategory } from "@/types/transaction";
+import type { ICategory, ITransaction } from "@/types/transaction";
 
 interface NewTransactionButtonProps {
   accounts: IAccount[];
   categories: ICategory[];
+  transactions?: ITransaction[];
 }
 
 export default function NewTransactionButton({
   accounts,
   categories,
+  transactions = [],
 }: NewTransactionButtonProps) {
   const [isTxnOpen, setIsTxnOpen] = useState(false);
   const [isCatOpen, setIsCatOpen] = useState(false);
@@ -46,6 +48,7 @@ export default function NewTransactionButton({
         onSubmit={handleSubmit}
         accounts={accounts}
         categories={categories}
+        transactions={transactions}
       />
 
       <CategoryManagementModal

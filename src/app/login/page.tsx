@@ -115,6 +115,12 @@ function LoginForm() {
           }
         />
 
+        <div className="flex justify-end text-xs">
+          <Link href="/forgot-password" className="text-primary hover:underline font-semibold transition-all">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
+
         <Button type="submit" className="w-full" size="lg" isLoading={loading}>
           Iniciar Sesión
         </Button>

@@ -1,46 +1,51 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Card from '@/components/ui/Card';
-import { updateUser, deleteUser } from '@/actions/users';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Card from "@/components/ui/Card";
+import { updateUser, deleteUser } from "@/actions/users";
 
 export default function EditUserForm({ user }: { user: any }) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsPending(true);
-    setError('');
+    setError("");
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      isAdmin: formData.get('isAdmin') === 'on',
-      allowedApps: formData.getAll('allowedApps') as string[],
+      isAdmin: formData.get("isAdmin") === "on",
+      allowedApps: formData.getAll("allowedApps") as string[],
     };
 
     try {
       await updateUser(user._id, data);
-      router.push('/admin/users');
+      router.push("/admin/users");
       router.refresh();
     } catch (err: any) {
-      setError(err.message || 'Error al actualizar el usuario');
+      setError(err.message || "Error al actualizar el usuario");
       setIsPending(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('¿Estás seguro de que deseas eliminar a este usuario permanentemente?')) return;
-    
+    if (
+      !confirm(
+        "¿Estás seguro de que deseas eliminar a este usuario permanentemente?",
+      )
+    )
+      return;
+
     setIsPending(true);
     try {
       await deleteUser(user._id);
-      router.push('/admin/users');
+      router.push("/admin/users");
       router.refresh();
     } catch (err: any) {
-      setError(err.message || 'Error al eliminar');
+      setError(err.message || "Error al eliminar");
       setIsPending(false);
     }
   };
@@ -57,8 +62,12 @@ export default function EditUserForm({ user }: { user: any }) {
 
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-foreground-muted">Usuario</p>
-              <p className="text-lg font-bold text-foreground">{user.username}</p>
+              <p className="text-sm font-medium text-foreground-muted">
+                Usuario
+              </p>
+              <p className="text-lg font-bold text-foreground">
+                {user.username}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-foreground-muted">Email</p>
@@ -67,32 +76,40 @@ export default function EditUserForm({ user }: { user: any }) {
           </div>
 
           <div className="pt-4 border-t border-white/5 space-y-4">
-            <h3 className="text-sm font-medium text-foreground">Modificar Roles y Permisos</h3>
-            
+            <h3 className="text-sm font-medium text-foreground">
+              Modificar Roles y Permisos
+            </h3>
+
             <label className="flex items-center gap-3 p-4 rounded-xl border border-white/5 bg-background-light/50 cursor-pointer hover:bg-white/5 transition-colors">
-              <input 
-                type="checkbox" 
-                name="isAdmin" 
+              <input
+                type="checkbox"
+                name="isAdmin"
                 defaultChecked={user.isAdmin}
-                className="w-5 h-5 rounded border-white/10 bg-background text-red-500 focus:ring-red-500/50" 
+                className="w-5 h-5 rounded border-white/10 bg-background text-red-500 focus:ring-red-500/50"
               />
               <div>
                 <p className="font-medium text-foreground">Administrador</p>
-                <p className="text-xs text-foreground-muted">Otorga acceso total al Panel de Control.</p>
+                <p className="text-xs text-foreground-muted">
+                  Otorga acceso total al Panel de Control.
+                </p>
               </div>
             </label>
 
             <label className="flex items-center gap-3 p-4 rounded-xl border border-white/5 bg-background-light/50 cursor-pointer hover:bg-white/5 transition-colors">
-              <input 
-                type="checkbox" 
-                name="allowedApps" 
-                value="gastos" 
-                defaultChecked={user.allowedApps?.includes('gastos')}
-                className="w-5 h-5 rounded border-white/10 bg-background text-emerald-500 focus:ring-emerald-500/50" 
+              <input
+                type="checkbox"
+                name="allowedApps"
+                value="gastos"
+                defaultChecked={user.allowedApps?.includes("gastos")}
+                className="w-5 h-5 rounded border-white/10 bg-background text-emerald-500 focus:ring-emerald-500/50"
               />
               <div>
-                <p className="font-medium text-foreground">App: Control de Gastos</p>
-                <p className="text-xs text-foreground-muted">Permite registrar y visualizar finanzas personales.</p>
+                <p className="font-medium text-foreground">
+                  App: Control de Gastos
+                </p>
+                <p className="text-xs text-foreground-muted">
+                  Permite registrar y visualizar finanzas personales.
+                </p>
               </div>
             </label>
           </div>
@@ -103,7 +120,7 @@ export default function EditUserForm({ user }: { user: any }) {
               disabled={isPending}
               className="flex-1 py-3 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              {isPending ? 'Guardando...' : 'Guardar Cambios'}
+              {isPending ? "Guardando..." : "Guardar Cambios"}
             </button>
             <button
               type="button"

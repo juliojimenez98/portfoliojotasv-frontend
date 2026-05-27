@@ -68,29 +68,20 @@ export default function Modal({
   if (!isOpen || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex flex-col justify-end md:items-center md:justify-center md:p-4 md:overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop — touch-action:none stops iOS scroll bleed */}
       <div
         className="fixed inset-0 bg-black/75 backdrop-blur-md animate-fade-in touch-none"
         onClick={onClose}
       />
 
-      {/* ── MOBILE: bottom sheet ── */}
       <div
         className={cn(
-          // Mobile: full-width bottom sheet sliding up
-          "relative w-full rounded-t-3xl bg-background-card border-t border-x border-border shadow-2xl overflow-hidden",
-          "md:rounded-2xl md:border md:my-8",
-          // Desktop: centered dialog with max-width
-          "md:" + sizeStyles[size],
-          "animate-slide-up md:animate-fade-in",
+          "relative w-full rounded-2xl bg-background-card border border-border shadow-2xl overflow-hidden",
+          sizeStyles[size],
+          "animate-fade-in"
         )}
       >
-        {/* Drag handle (mobile only) */}
-        <div className="md:hidden flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-border rounded-full" />
-        </div>
-
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between px-5 py-3 md:px-6 md:py-4 border-b border-border bg-background-card/80 backdrop-blur sticky top-0 z-10">
@@ -120,8 +111,8 @@ export default function Modal({
           </div>
         )}
 
-        {/* Body – on mobile uses most of the viewport height, overscroll-contain stops scroll chaining to page behind */}
-        <div className="px-4 py-4 md:px-6 overflow-y-auto overscroll-contain max-h-[85dvh] md:max-h-[80vh]">
+        {/* Body – uses most of the viewport height, overscroll-contain stops scroll chaining to page behind */}
+        <div className="px-4 py-4 md:px-6 overflow-y-auto overscroll-contain max-h-[75dvh]">
           {children}
         </div>
       </div>

@@ -218,7 +218,7 @@ export default async function GastosDashboardPage({
           </p>
         </div>
         <div>
-          <NewTransactionButton accounts={accounts} categories={categories} />
+          <NewTransactionButton accounts={accounts} categories={categories} transactions={recentTransactions} />
         </div>
       </div>
 

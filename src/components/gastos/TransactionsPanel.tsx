@@ -7,13 +7,13 @@ import DeleteTransactionButton from "./DeleteTransactionButton";
 import TransactionFormModal from "./TransactionFormModal";
 import { formatCurrency, cn } from "@/lib/utils";
 import { updateTransaction } from "@/actions/transactions";
-import type { ITransaction } from "@/types/transaction";
+import type { ITransaction, ICategory } from "@/types/transaction";
 import type { IAccount } from "@/types/account";
 import type { ISpendPeriod } from "@/types/period";
 
 interface TransactionsPanelProps {
   transactions: ITransaction[];
-  categories: { value: string; label: string; icon: string }[];
+  categories: ICategory[];
   accounts: IAccount[];
   periods?: ISpendPeriod[];
 }
@@ -560,8 +560,9 @@ export default function TransactionsPanel({
           }
         }}
         accounts={accounts}
-        categories={categories as any}
+        categories={categories}
         editingTransaction={editingTxn}
+        transactions={transactions}
       />
     </div>
   );

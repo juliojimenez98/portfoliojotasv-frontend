@@ -8,6 +8,7 @@ export interface ICategory {
   label: string;
   icon: string;
   isDefault?: boolean;
+  limit?: number;
 }
 
 export const TRANSACTION_CATEGORIES: {
