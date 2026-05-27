@@ -125,8 +125,16 @@ export default function CuentasPage() {
     accountId: string,
     amount: number,
     description?: string,
+    internationalAmountUSD?: number,
+    exchangeRate?: number,
   ) => {
-    await depositToAccount(accountId, amount, description);
+    await depositToAccount(
+      accountId,
+      amount,
+      description,
+      internationalAmountUSD,
+      exchangeRate,
+    );
     await fetchAccounts();
   };
 
@@ -354,23 +362,62 @@ export default function CuentasPage() {
 
               {/* Balance */}
               {acc.type === "credit_card" ? (
-                <div className="mt-4 grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
-                      Gastado
-                    </p>
-                    <p className="text-xl font-bold text-danger">
-                      -{formatCurrency(Math.max(0, (acc.creditLimit || 0) - acc.balance))}
-                    </p>
+                <div className="mt-4 space-y-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                        Gastado
+                      </p>
+                      <p className="text-xl font-bold text-danger">
+                        -
+                        {formatCurrency(
+                          Math.max(0, (acc.creditLimit || 0) - acc.balance),
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                        Cupo Disp.
+                      </p>
+                      <p className="text-xl font-bold text-foreground">
+                        {formatCurrency(acc.balance)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
-                      Cupo Disp.
-                    </p>
-                    <p className="text-xl font-bold text-foreground">
-                      {formatCurrency(acc.balance)}
-                    </p>
-                  </div>
+                  {acc.internationalCreditLimit != null &&
+                    acc.internationalCreditLimit > 0 && (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-primary/8 border border-primary/20">
+                        <div>
+                          <p className="text-[10px] text-foreground-subtle uppercase tracking-wider font-medium">
+                            🌐 Cupo Internacional
+                          </p>
+                          <p className="text-sm font-bold text-foreground mt-0.5">
+                            USD{" "}
+                            {(acc.internationalBalance ?? 0).toLocaleString(
+                              "es-CL",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
+                            <span className="text-xs font-normal text-foreground-subtle">
+                              {" "}
+                              disp.
+                            </span>
+                          </p>
+                        </div>
+                        <p className="text-xs text-foreground-subtle">
+                          / USD{" "}
+                          {acc.internationalCreditLimit.toLocaleString(
+                            "es-CL",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}
+                        </p>
+                      </div>
+                    )}
                 </div>
               ) : (
                 <div className="mt-4">
@@ -391,7 +438,9 @@ export default function CuentasPage() {
                 {acc.type === "credit_card" && (
                   <>
                     <span>·</span>
-                    <span>Cupo Total: {formatCurrency(acc.creditLimit || 0)}</span>
+                    <span>
+                      Cupo Total: {formatCurrency(acc.creditLimit || 0)}
+                    </span>
                   </>
                 )}
               </div>

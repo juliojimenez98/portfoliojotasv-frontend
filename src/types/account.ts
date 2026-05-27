@@ -1,5 +1,10 @@
-export type AccountType = 'credit_card' | 'debit' | 'cash' | 'savings' | 'other';
-export type RefreshType = 'automatic' | 'manual';
+export type AccountType =
+  | "credit_card"
+  | "debit"
+  | "cash"
+  | "savings"
+  | "other";
+export type RefreshType = "automatic" | "manual";
 
 export interface IAccount {
   _id: string;
@@ -11,6 +16,8 @@ export interface IAccount {
   currency: string;
   balance: number;
   creditLimit?: number;
+  internationalCreditLimit?: number; // Total USD international credit limit
+  internationalBalance?: number; // Available USD international credit
   color: string;
   icon: string;
   refreshType: RefreshType;
@@ -27,6 +34,8 @@ export interface CreateAccountInput {
   currency?: string;
   balance?: number;
   creditLimit?: number;
+  internationalCreditLimit?: number;
+  internationalBalance?: number;
   color?: string;
   icon?: string;
   refreshType?: RefreshType;
@@ -40,6 +49,8 @@ export interface UpdateAccountInput {
   currency?: string;
   balance?: number;
   creditLimit?: number;
+  internationalCreditLimit?: number;
+  internationalBalance?: number;
   color?: string;
   icon?: string;
   refreshType?: RefreshType;

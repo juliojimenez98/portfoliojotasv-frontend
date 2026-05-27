@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
-import Input, { Select } from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import type { IAccount, AccountType, RefreshType } from '@/types/account';
+import React, { useState, useEffect } from "react";
+import Modal from "@/components/ui/Modal";
+import Input, { Select } from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
+import type { IAccount, AccountType, RefreshType } from "@/types/account";
 
 interface AccountFormModalProps {
   isOpen: boolean;
@@ -14,29 +14,38 @@ interface AccountFormModalProps {
 }
 
 const accountTypeOptions = [
-  { value: 'debit', label: '🏦 Débito' },
-  { value: 'credit_card', label: '💳 Tarjeta de Crédito' },
-  { value: 'cash', label: '💵 Efectivo' },
-  { value: 'savings', label: '🏆 Ahorros' },
-  { value: 'other', label: '📁 Otro' },
+  { value: "debit", label: "🏦 Débito" },
+  { value: "credit_card", label: "💳 Tarjeta de Crédito" },
+  { value: "cash", label: "💵 Efectivo" },
+  { value: "savings", label: "🏆 Ahorros" },
+  { value: "other", label: "📁 Otro" },
 ];
 
 const refreshTypeOptions = [
-  { value: 'manual', label: '✋ Manual' },
-  { value: 'automatic', label: '⚡ Automático' },
+  { value: "manual", label: "✋ Manual" },
+  { value: "automatic", label: "⚡ Automático" },
 ];
 
 const currencyOptions = [
-  { value: 'CLP', label: 'CLP — Peso Chileno' },
-  { value: 'USD', label: 'USD — Dólar' },
-  { value: 'EUR', label: 'EUR — Euro' },
-  { value: 'DOP', label: 'DOP — Peso Dominicano' },
+  { value: "CLP", label: "CLP — Peso Chileno" },
+  { value: "USD", label: "USD — Dólar" },
+  { value: "EUR", label: "EUR — Euro" },
+  { value: "DOP", label: "DOP — Peso Dominicano" },
 ];
 
 const colorOptions = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
-  '#f97316', '#eab308', '#22c55e', '#10b981',
-  '#06b6d4', '#3b82f6', '#64748b', '#78716c',
+  "#6366f1",
+  "#8b5cf6",
+  "#ec4899",
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#10b981",
+  "#06b6d4",
+  "#3b82f6",
+  "#64748b",
+  "#78716c",
 ];
 
 export default function AccountFormModal({
@@ -48,83 +57,119 @@ export default function AccountFormModal({
   const isEdit = !!account;
 
   const [form, setForm] = useState({
-    name: '',
-    description: '',
-    type: 'debit' as AccountType,
-    bankName: '',
-    currency: 'CLP',
+    name: "",
+    description: "",
+    type: "debit" as AccountType,
+    bankName: "",
+    currency: "CLP",
     balance: 0,
     creditLimit: 0,
-    color: '#6366f1',
-    refreshType: 'manual' as RefreshType,
+    hasInternational: false,
+    internationalCreditLimit: 0,
+    internationalBalance: 0,
+    color: "#6366f1",
+    refreshType: "manual" as RefreshType,
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (account) {
       setForm({
         name: account.name,
-        description: account.description || '',
+        description: account.description || "",
         type: account.type,
-        bankName: account.bankName || '',
+        bankName: account.bankName || "",
         currency: account.currency,
         balance: account.balance,
         creditLimit: account.creditLimit || 0,
+        hasInternational: !!account.internationalCreditLimit,
+        internationalCreditLimit: account.internationalCreditLimit || 0,
+        internationalBalance: account.internationalBalance || 0,
         color: account.color,
-        refreshType: account.refreshType || 'manual',
+        refreshType: account.refreshType || "manual",
       });
     } else {
       setForm({
-        name: '',
-        description: '',
-        type: 'debit',
-        bankName: '',
-        currency: 'CLP',
+        name: "",
+        description: "",
+        type: "debit",
+        bankName: "",
+        currency: "CLP",
         balance: 0,
         creditLimit: 0,
-        color: '#6366f1',
-        refreshType: 'manual',
+        hasInternational: false,
+        internationalCreditLimit: 0,
+        internationalBalance: 0,
+        color: "#6366f1",
+        refreshType: "manual",
       });
     }
-    setError('');
+    setError("");
   }, [account, isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: name === 'balance' || name === 'creditLimit' ? parseFloat(value) || 0 : value,
+      [name]:
+        name === "balance" ||
+        name === "creditLimit" ||
+        name === "internationalCreditLimit" ||
+        name === "internationalBalance"
+          ? parseFloat(value) || 0
+          : value,
     }));
+  };
+
+  const handleToggleInternational = () => {
+    setForm((prev) => ({ ...prev, hasInternational: !prev.hasInternational }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      setError('El nombre es requerido');
+      setError("El nombre es requerido");
       return;
     }
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const payload = {
         ...form,
-        creditLimit: form.type === 'credit_card' ? form.creditLimit : undefined,
+        creditLimit: form.type === "credit_card" ? form.creditLimit : undefined,
+        internationalCreditLimit:
+          form.type === "credit_card" && form.hasInternational
+            ? form.internationalCreditLimit
+            : undefined,
+        internationalBalance:
+          form.type === "credit_card" && form.hasInternational
+            ? form.internationalBalance > 0
+              ? form.internationalBalance
+              : form.internationalCreditLimit
+            : undefined,
       };
-      if (form.type === 'credit_card' && !isEdit && !form.balance) {
+      if (form.type === "credit_card" && !isEdit && !form.balance) {
         payload.balance = form.creditLimit;
       }
       await onSubmit(payload);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Error al guardar la cuenta');
+      setError(err.message || "Error al guardar la cuenta");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Editar Cuenta' : 'Nueva Cuenta'} size="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEdit ? "Editar Cuenta" : "Nueva Cuenta"}
+      size="lg"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">
@@ -166,12 +211,13 @@ export default function AccountFormModal({
           />
         </div>
 
-        {form.type === 'credit_card' && (
+        {form.type === "credit_card" && (
           <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-xs text-danger space-y-1">
             <p className="font-bold">💳 Cuenta de tipo Tarjeta de Crédito</p>
             <p className="text-foreground-muted leading-relaxed">
-              Las tarjetas de crédito **no forman parte de tus activos/dinero disponible**. 
-              Al registrar compras, se descontará del cupo disponible y se mostrará cuánto has gastado en números rojos.
+              Las tarjetas de crédito **no forman parte de tus activos/dinero
+              disponible**. Al registrar compras, se descontará del cupo
+              disponible y se mostrará cuánto has gastado en números rojos.
             </p>
           </div>
         )}
@@ -194,25 +240,31 @@ export default function AccountFormModal({
           />
         </div>
 
-        {form.type === 'credit_card' ? (
+        {form.type === "credit_card" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Cupo total (Límite de crédito) *"
               name="creditLimit"
               type="number"
-              step={form.currency === 'CLP' ? '1' : '0.01'}
+              step={form.currency === "CLP" ? "1" : "0.01"}
               value={form.creditLimit.toString()}
               onChange={handleChange}
               placeholder="0"
             />
             <Input
-              label={isEdit ? "Cupo disponible (Balance actual) *" : "Cupo disponible inicial (opcional)"}
+              label={
+                isEdit
+                  ? "Cupo disponible (Balance actual) *"
+                  : "Cupo disponible inicial (opcional)"
+              }
               name="balance"
               type="number"
-              step={form.currency === 'CLP' ? '1' : '0.01'}
+              step={form.currency === "CLP" ? "1" : "0.01"}
               value={form.balance.toString()}
               onChange={handleChange}
-              placeholder={isEdit ? "0" : "Dejar en blanco para usar cupo total"}
+              placeholder={
+                isEdit ? "0" : "Dejar en blanco para usar cupo total"
+              }
             />
           </div>
         ) : (
@@ -221,7 +273,7 @@ export default function AccountFormModal({
               label="Balance inicial"
               name="balance"
               type="number"
-              step={form.currency === 'CLP' ? '1' : '0.01'}
+              step={form.currency === "CLP" ? "1" : "0.01"}
               value={form.balance.toString()}
               onChange={handleChange}
               placeholder="0"
@@ -229,9 +281,73 @@ export default function AccountFormModal({
           )
         )}
 
+        {/* International credit limit (credit cards only) */}
+        {form.type === "credit_card" && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleToggleInternational}
+              className="flex items-center gap-2 text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
+            >
+              <span
+                className={`w-4 h-4 rounded border-2 flex items-center justify-center text-[10px] transition-colors ${form.hasInternational ? "bg-primary border-primary text-white" : "border-border"}`}
+              >
+                {form.hasInternational ? "✓" : ""}
+              </span>
+              🌐 Esta tarjeta tiene cupo internacional (en USD)
+            </button>
+
+            {form.hasInternational && (
+              <div className="p-3.5 rounded-xl bg-primary/8 border border-primary/25 space-y-3">
+                <p className="text-xs text-foreground-muted font-medium">
+                  El cupo internacional se maneja en{" "}
+                  <span className="font-bold text-primary">USD</span>. Al pagar
+                  cobros internacionales se te pedirá la tasa de cambio (CLP por
+                  dólar).
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    label="Cupo internacional total (USD) *"
+                    name="internationalCreditLimit"
+                    type="number"
+                    step="0.01"
+                    value={form.internationalCreditLimit.toString()}
+                    onChange={handleChange}
+                    placeholder="Ej: 500"
+                  />
+                  <Input
+                    label={
+                      isEdit
+                        ? "Cupo internacional disponible (USD) *"
+                        : "Cupo disponible inicial (USD)"
+                    }
+                    name="internationalBalance"
+                    type="number"
+                    step="0.01"
+                    value={form.internationalBalance.toString()}
+                    onChange={handleChange}
+                    placeholder={
+                      isEdit ? "0.00" : "Dejar en 0 para usar cupo total"
+                    }
+                  />
+                </div>
+                {!isEdit &&
+                  form.internationalCreditLimit > 0 &&
+                  form.internationalBalance === 0 && (
+                    <p className="text-[11px] text-foreground-subtle">
+                      💡 Se usará el cupo total como disponible inicial.
+                    </p>
+                  )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Color picker */}
         <div>
-          <label className="block text-sm font-medium text-foreground-muted mb-2">Color</label>
+          <label className="block text-sm font-medium text-foreground-muted mb-2">
+            Color
+          </label>
           <div className="flex flex-wrap gap-2">
             {colorOptions.map((c) => (
               <button
@@ -241,9 +357,9 @@ export default function AccountFormModal({
                 className="w-8 h-8 rounded-lg transition-all duration-200 border-2"
                 style={{
                   backgroundColor: c,
-                  borderColor: form.color === c ? '#fff' : 'transparent',
-                  transform: form.color === c ? 'scale(1.15)' : 'scale(1)',
-                  boxShadow: form.color === c ? `0 0 12px ${c}60` : 'none',
+                  borderColor: form.color === c ? "#fff" : "transparent",
+                  transform: form.color === c ? "scale(1.15)" : "scale(1)",
+                  boxShadow: form.color === c ? `0 0 12px ${c}60` : "none",
                 }}
               />
             ))}
@@ -251,11 +367,16 @@ export default function AccountFormModal({
         </div>
 
         <div className="flex gap-3 pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+            className="flex-1"
+          >
             Cancelar
           </Button>
           <Button type="submit" isLoading={loading} className="flex-1">
-            {isEdit ? 'Guardar Cambios' : 'Crear Cuenta'}
+            {isEdit ? "Guardar Cambios" : "Crear Cuenta"}
           </Button>
         </div>
       </form>

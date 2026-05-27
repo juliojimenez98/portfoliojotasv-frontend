@@ -61,10 +61,17 @@ export async function depositToAccount(
   id: string,
   amount: number,
   description?: string,
+  internationalAmountUSD?: number,
+  exchangeRate?: number,
 ) {
+  const body: any = { amount, description };
+  if (internationalAmountUSD != null) {
+    body.internationalAmountUSD = internationalAmountUSD;
+    body.exchangeRate = exchangeRate;
+  }
   const res = await fetchWithAuth(`/api/accounts/${id}/deposit`, {
     method: "POST",
-    body: JSON.stringify({ amount, description }),
+    body: JSON.stringify(body),
   });
   revalidatePath("/app/gastos/cuentas");
   revalidatePath("/app/gastos");

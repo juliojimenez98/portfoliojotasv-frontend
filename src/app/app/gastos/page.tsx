@@ -218,7 +218,11 @@ export default async function GastosDashboardPage({
           </p>
         </div>
         <div>
-          <NewTransactionButton accounts={accounts} categories={categories} transactions={recentTransactions} />
+          <NewTransactionButton
+            accounts={accounts}
+            categories={categories}
+            transactions={recentTransactions}
+          />
         </div>
       </div>
 
@@ -326,11 +330,29 @@ export default async function GastosDashboardPage({
                     {account.type === "credit_card" ? (
                       <div className="text-right">
                         <p className="text-sm font-semibold text-danger">
-                          -{formatCurrency(Math.max(0, (account.creditLimit || 0) - account.balance))}
+                          -
+                          {formatCurrency(
+                            Math.max(
+                              0,
+                              (account.creditLimit || 0) - account.balance,
+                            ),
+                          )}
                         </p>
                         <p className="text-[10px] text-foreground-subtle">
                           Cupo: {formatCurrency(account.balance)}
                         </p>
+                        {account.internationalCreditLimit != null &&
+                          account.internationalCreditLimit > 0 && (
+                            <p className="text-[10px] text-primary mt-0.5">
+                              🌐 USD{" "}
+                              {(
+                                account.internationalBalance ?? 0
+                              ).toLocaleString("es-CL", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
+                          )}
                       </div>
                     ) : (
                       <p className="text-sm font-semibold text-foreground">
