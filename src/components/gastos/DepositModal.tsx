@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Modal from "@/components/ui/Modal";
-import Input from "@/components/ui/Input";
+import Input, { Select } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import type { IAccount } from "@/types/account";
 import { formatCurrency } from "@/lib/utils";
@@ -17,8 +17,10 @@ interface DepositModalProps {
     description?: string,
     internationalAmountUSD?: number,
     exchangeRate?: number,
+    fromAccountId?: string,
   ) => Promise<void>;
   account: IAccount | null;
+  accounts?: IAccount[];
 }
 
 export default function DepositModal({
@@ -26,9 +28,11 @@ export default function DepositModal({
   onClose,
   onSubmit,
   account,
+  accounts = [],
 }: DepositModalProps) {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [fromAccountId, setFromAccountId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -76,6 +80,11 @@ export default function DepositModal({
     }
     if (!account) return;
 
+    if (account.type === "credit_card" && !fromAccountId) {
+      setError("Selecciona la cuenta de origen para realizar el pago");
+      return;
+    }
+
     if (payingInternational) {
       const usdAmt = parseFloat(intlUSD);
       if (!usdAmt || usdAmt <= 0) {
@@ -100,9 +109,17 @@ export default function DepositModal({
           description || undefined,
           usdAmt,
           effectiveRate,
+          fromAccountId || undefined,
         );
       } else {
-        await onSubmit(account._id, numAmount, description || undefined);
+        await onSubmit(
+          account._id,
+          numAmount,
+          description || undefined,
+          undefined,
+          undefined,
+          fromAccountId || undefined,
+        );
       }
       handleClose();
     } catch (err: any) {
@@ -121,6 +138,7 @@ export default function DepositModal({
     setAutoRate(null);
     setCustomRate("");
     setUseCustomRate(false);
+    setFromAccountId("");
     onClose();
   };
 
@@ -193,6 +211,21 @@ export default function DepositModal({
           <div className="p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">
             {error}
           </div>
+        )}
+
+        {/* Source Account Selection (only for credit cards) */}
+        {account.type === "credit_card" && (
+          <Select
+            label="Cuenta de origen (desde dónde pagas) *"
+            value={fromAccountId}
+            onChange={(e) => setFromAccountId(e.target.value)}
+            options={accounts
+              .filter((a) => a.type !== "credit_card" && a.isActive)
+              .map((a) => ({
+                value: a._id,
+                label: `${a.name} (${formatCurrency(a.balance, a.currency)})`,
+              }))}
+          />
         )}
 
         {/* International toggle */}

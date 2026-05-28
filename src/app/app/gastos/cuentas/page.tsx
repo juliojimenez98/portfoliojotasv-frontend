@@ -127,6 +127,7 @@ export default function CuentasPage() {
     description?: string,
     internationalAmountUSD?: number,
     exchangeRate?: number,
+    fromAccountId?: string,
   ) => {
     await depositToAccount(
       accountId,
@@ -134,6 +135,7 @@ export default function CuentasPage() {
       description,
       internationalAmountUSD,
       exchangeRate,
+      fromAccountId,
     );
     await fetchAccounts();
   };
@@ -455,12 +457,14 @@ export default function CuentasPage() {
                     💰 Abonar a tarjeta de crédito
                   </button>
                 )}
-                <button
-                  onClick={() => openTransfer(acc)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
-                >
-                  🔄 Transferir
-                </button>
+                {acc.type !== "credit_card" && (
+                  <button
+                    onClick={() => openTransfer(acc)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                  >
+                    🔄 Transferir
+                  </button>
+                )}
                 <button
                   onClick={() => openEdit(acc)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-foreground-muted bg-background-elevated hover:bg-white/10 transition-colors"
@@ -515,6 +519,7 @@ export default function CuentasPage() {
         }}
         onSubmit={handleDeposit}
         account={selectedAccount}
+        accounts={accounts}
       />
 
       <TransferModal
