@@ -27,6 +27,14 @@ const currencyOptions = [
   { value: "DOP", label: "DOP — Peso Dominicano" },
 ];
 
+const getLocalDateString = (dateInput: Date | string | number) => {
+  const d = new Date(dateInput);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const QUICK_EMOJIS = [
   "🍔",
   "🚗",
@@ -47,6 +55,7 @@ const QUICK_EMOJIS = [
   "🥦",
   "⛽",
   "🎮",
+  "🛒",
 ];
 
 const typeIcons = ACCOUNT_TYPE_ICONS;
@@ -70,7 +79,7 @@ export default function TransactionFormModal({
     exchangeRate: "",
     category: "",
     customCategory: "",
-    date: new Date().toISOString().split("T")[0],
+    date: getLocalDateString(new Date()),
     notes: "",
   });
 
@@ -107,8 +116,8 @@ export default function TransactionFormModal({
             (categories.length > 0 ? categories[0].value : "other"),
           customCategory: "",
           date: editingTransaction.date
-            ? new Date(editingTransaction.date).toISOString().split("T")[0]
-            : new Date().toISOString().split("T")[0],
+            ? getLocalDateString(editingTransaction.date)
+            : getLocalDateString(new Date()),
           notes: editingTransaction.notes || "",
         });
         setStep(3); // Start directly at details when editing
@@ -122,7 +131,7 @@ export default function TransactionFormModal({
           exchangeRate: "",
           category: categories.length > 0 ? categories[0].value : "other",
           customCategory: "",
-          date: new Date().toISOString().split("T")[0],
+          date: getLocalDateString(new Date()),
           notes: "",
         });
         setStep(1); // Start at step 1 for new transactions
@@ -210,7 +219,7 @@ export default function TransactionFormModal({
           ? parseFloat(form.exchangeRate)
           : undefined,
         category: resolvedCategoryValue,
-        date: new Date(form.date),
+        date: new Date(form.date + "T00:00:00"),
         notes: form.notes.trim() || undefined,
       });
       onClose();
@@ -234,7 +243,7 @@ export default function TransactionFormModal({
       return { currentCategoryExpenses: 0, newTotal: 0 };
     }
 
-    const date = new Date(form.date);
+    const date = new Date(form.date + "T00:00:00");
     const month = date.getMonth();
     const year = date.getFullYear();
 
