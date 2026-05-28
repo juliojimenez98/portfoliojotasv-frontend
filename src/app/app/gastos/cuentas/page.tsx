@@ -447,12 +447,14 @@ export default function CuentasPage() {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
-                <button
-                  onClick={() => openDeposit(acc)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-green-400 bg-green-500/10 hover:bg-green-500/20 transition-colors"
-                >
-                  💰 Abonar
-                </button>
+                {acc.type === "credit_card" && (
+                  <button
+                    onClick={() => openDeposit(acc)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-green-400 bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                  >
+                    💰 Abonar a tarjeta de crédito
+                  </button>
+                )}
                 <button
                   onClick={() => openTransfer(acc)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"

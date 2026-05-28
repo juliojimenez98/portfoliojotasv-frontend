@@ -50,7 +50,12 @@ export default function TransferModal({
       : `${a.name} (${formatCurrency(a.balance, a.currency)})`,
   }));
 
-  const destinationOptions = accountOptions.filter((a) => a.value !== fromId);
+  const destinationOptions = accounts
+    .filter((a) => a._id !== fromId && a.type !== 'credit_card')
+    .map((a) => ({
+      value: a._id,
+      label: `${a.name} (${formatCurrency(a.balance, a.currency)})`,
+    }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
