@@ -10,6 +10,7 @@ import type { ISpendPeriod } from "@/types/period";
 import type { PaydayConfig } from "@/types/user";
 import type { IAccount } from "@/types/account";
 import { formatCurrency } from "@/lib/utils";
+import Link from "next/link";
 
 interface PaydayReceiveModalProps {
   isOpen: boolean;
@@ -138,6 +139,25 @@ export default function PaydayReceiveModal({
               archivadas en el historial del período que se cierra.
             </p>
           </div>
+
+          {/* Payday config warning */}
+          {(!paydayConfig || !paydayConfig.accountId) && (
+            <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 space-y-2.5">
+              <p className="text-xs font-bold text-primary flex items-center gap-1.5 uppercase tracking-wider">
+                <span>💡</span> Configuración de sueldo no encontrada
+              </p>
+              <p className="text-xs text-foreground-muted leading-relaxed">
+                No tienes configurada una cuenta destino para tu sueldo. Si lo configuras, el sistema te sugerirá abonar automáticamente tu sueldo al iniciar el período.
+              </p>
+              <Link 
+                href="/app/gastos/configuracion" 
+                onClick={onClose}
+                className="text-xs font-bold text-primary hover:underline block"
+              >
+                ⚙️ Configurar Día de Pago ahora
+              </Link>
+            </div>
+          )}
 
           {/* Active period summary (if any) */}
           {activePeriod && (
