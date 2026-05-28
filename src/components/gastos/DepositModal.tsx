@@ -149,6 +149,28 @@ export default function DepositModal({
   const implicitRate =
     usdNum > 0 && clpNum > 0 ? Math.round(clpNum / usdNum) : 0;
 
+  // Cálculos de porcentajes precisos para cupos (mostrando un decimal cuando corresponda)
+  const nationalSpentPct = account.creditLimit
+    ? Math.min(
+        100,
+        Math.max(0, ((account.creditLimit - account.balance) / account.creditLimit) * 100)
+      )
+    : 0;
+  const nationalAvailablePct = 100 - nationalSpentPct;
+
+  const intlSpentPct = account.internationalCreditLimit
+    ? Math.min(
+        100,
+        Math.max(
+          0,
+          ((account.internationalCreditLimit - (account.internationalBalance ?? 0)) /
+            account.internationalCreditLimit) *
+            100
+        )
+      )
+    : 0;
+  const intlAvailablePct = 100 - intlSpentPct;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -212,12 +234,12 @@ export default function DepositModal({
                     <div className="w-full h-2 rounded-full bg-border/40 overflow-hidden relative">
                       <div 
                         className="h-full bg-danger rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, Math.max(0, ((account.creditLimit - account.balance) / account.creditLimit) * 100))}%` }}
+                        style={{ width: `${nationalSpentPct}%` }}
                       />
                     </div>
                     <div className="flex justify-between text-[9px] text-foreground-subtle">
-                      <span>{Math.round(Math.min(100, Math.max(0, ((account.creditLimit - account.balance) / account.creditLimit) * 100)))}% gastado</span>
-                      <span>{Math.round(Math.min(100, Math.max(0, (account.balance / account.creditLimit) * 100)))}% disp.</span>
+                      <span>{nationalSpentPct.toFixed(1).replace(/\.0$/, "")}% gastado</span>
+                      <span>{nationalAvailablePct.toFixed(1).replace(/\.0$/, "")}% disp.</span>
                     </div>
                   </div>
                 ) : null}
@@ -260,12 +282,12 @@ export default function DepositModal({
                       <div className="w-full h-2 rounded-full bg-border/40 overflow-hidden relative">
                         <div 
                           className="h-full bg-danger rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, Math.max(0, (((account.internationalCreditLimit - (account.internationalBalance ?? 0)) / account.internationalCreditLimit) * 100)))}%` }}
+                          style={{ width: `${intlSpentPct}%` }}
                         />
                       </div>
                       <div className="flex justify-between text-[9px] text-foreground-subtle">
-                        <span>{Math.round(Math.min(100, Math.max(0, (((account.internationalCreditLimit - (account.internationalBalance ?? 0)) / account.internationalCreditLimit) * 100))))}% gastado</span>
-                        <span>{Math.round(Math.min(100, Math.max(0, ((account.internationalBalance ?? 0) / account.internationalCreditLimit) * 100)))}% disp.</span>
+                        <span>{intlSpentPct.toFixed(1).replace(/\.0$/, "")}% gastado</span>
+                        <span>{intlAvailablePct.toFixed(1).replace(/\.0$/, "")}% disp.</span>
                       </div>
                     </div>
                   ) : null}
