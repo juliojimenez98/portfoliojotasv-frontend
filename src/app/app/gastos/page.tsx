@@ -125,9 +125,7 @@ export default async function GastosDashboardPage({
 
   const periodExpenseTotal = periodExpenses.reduce((s, t) => s + t.amount, 0);
 
-  const recent = displayedTransactions
-    .filter((t) => isInRange(t.date))
-    .slice(0, 15);
+  const recent = displayedTransactions.slice(0, 15);
   const totalBalance = accounts
     .filter((a) => a.type !== "credit_card")
     .reduce((acc, a) => acc + a.balance, 0);

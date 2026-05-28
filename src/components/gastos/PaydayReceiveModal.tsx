@@ -43,7 +43,10 @@ export default function PaydayReceiveModal({
   const [depositError, setDepositError] = useState("");
 
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const todayStr = `${year}-${month}-${day}`; // YYYY-MM-DD (local timezone)
 
   const defaultLabel = (startDate ? new Date(startDate + "T12:00:00") : now)
     .toLocaleDateString("es-CL", { month: "long", year: "numeric" })
