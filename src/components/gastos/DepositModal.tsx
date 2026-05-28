@@ -162,49 +162,124 @@ export default function DepositModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Account info */}
-        <div className="p-3 rounded-xl bg-background-elevated border border-border">
+        <div className="p-4 rounded-2xl bg-background-elevated border border-border space-y-4">
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg font-bold"
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-md shrink-0 animate-pulse"
               style={{ backgroundColor: account.color }}
             >
-              {account.name.charAt(0)}
+              {account.type === "credit_card" ? "💳" : account.name.charAt(0)}
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-foreground text-sm">
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-foreground text-base truncate">
                 {account.name}
               </p>
-              <p className="text-xs text-foreground-subtle">
-                {account.type === "credit_card"
-                  ? "Cupo disponible"
-                  : "Balance actual"}
-                :{" "}
-                <span className="font-medium text-foreground">
-                  {formatCurrency(account.balance, account.currency)}
-                </span>
+              <p className="text-[10px] text-foreground-subtle uppercase tracking-wider font-semibold">
+                {account.type === "credit_card" ? "Tarjeta de Crédito" : "Cuenta corriente/vista"}
               </p>
-              {hasInternational && (
-                <p className="text-xs text-foreground-subtle mt-0.5">
-                  🌐 Cupo intl. disponible:{" "}
-                  <span className="font-medium text-foreground">
-                    USD{" "}
-                    {(account.internationalBalance ?? 0).toLocaleString(
-                      "es-CL",
-                      { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-                    )}
-                  </span>
-                  <span className="text-foreground-subtle">
-                    {" "}
-                    / USD{" "}
-                    {(account.internationalCreditLimit ?? 0).toLocaleString(
-                      "es-CL",
-                      { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-                    )}
-                  </span>
-                </p>
-              )}
             </div>
           </div>
+
+          {account.type === "credit_card" ? (
+            <div className="space-y-4 pt-2 border-t border-border/50">
+              {/* Cupo Nacional */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-foreground-muted">🇨🇱 Cupo Nacional ({account.currency})</span>
+                  <span className="text-[10px] font-medium text-foreground-subtle">
+                    Límite: {formatCurrency(account.creditLimit || 0, account.currency)}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 bg-background/40 p-2.5 rounded-xl border border-border/30">
+                  <div>
+                    <span className="text-[10px] text-foreground-subtle block uppercase font-medium">Gastado</span>
+                    <span className="text-sm font-extrabold text-danger">
+                      {formatCurrency(Math.max(0, (account.creditLimit || 0) - account.balance), account.currency)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-foreground-subtle block uppercase font-medium">Disponible</span>
+                    <span className="text-sm font-extrabold text-success">
+                      {formatCurrency(account.balance, account.currency)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                {account.creditLimit ? (
+                  <div className="space-y-1">
+                    <div className="w-full h-2 rounded-full bg-border/40 overflow-hidden relative">
+                      <div 
+                        className="h-full bg-danger rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, Math.max(0, ((account.creditLimit - account.balance) / account.creditLimit) * 100))}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[9px] text-foreground-subtle">
+                      <span>{Math.round(Math.min(100, Math.max(0, ((account.creditLimit - account.balance) / account.creditLimit) * 100)))}% gastado</span>
+                      <span>{Math.round(Math.min(100, Math.max(0, (account.balance / account.creditLimit) * 100)))}% disp.</span>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Cupo Internacional */}
+              {hasInternational && (
+                <div className="space-y-2 pt-2 border-t border-border/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground-muted">🌐 Cupo Internacional (USD)</span>
+                    <span className="text-[10px] font-medium text-foreground-subtle">
+                      Límite: USD {(account.internationalCreditLimit || 0).toLocaleString("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 bg-background/40 p-2.5 rounded-xl border border-border/30">
+                    <div>
+                      <span className="text-[10px] text-foreground-subtle block uppercase font-medium">Gastado</span>
+                      <span className="text-sm font-extrabold text-danger">
+                        USD {Math.max(0, (account.internationalCreditLimit || 0) - (account.internationalBalance ?? 0)).toLocaleString("es-CL", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-foreground-subtle block uppercase font-medium">Disponible</span>
+                      <span className="text-sm font-extrabold text-success">
+                        USD {(account.internationalBalance ?? 0).toLocaleString("es-CL", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  {account.internationalCreditLimit ? (
+                    <div className="space-y-1">
+                      <div className="w-full h-2 rounded-full bg-border/40 overflow-hidden relative">
+                        <div 
+                          className="h-full bg-danger rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(0, (((account.internationalCreditLimit - (account.internationalBalance ?? 0)) / account.internationalCreditLimit) * 100)))}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[9px] text-foreground-subtle">
+                        <span>{Math.round(Math.min(100, Math.max(0, (((account.internationalCreditLimit - (account.internationalBalance ?? 0)) / account.internationalCreditLimit) * 100))))}% gastado</span>
+                        <span>{Math.round(Math.min(100, Math.max(0, ((account.internationalBalance ?? 0) / account.internationalCreditLimit) * 100)))}% disp.</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="pt-2 border-t border-border/50 flex justify-between items-center text-xs">
+              <span className="text-foreground-muted font-medium">Balance actual:</span>
+              <span className="font-extrabold text-foreground text-sm">
+                {formatCurrency(account.balance, account.currency)}
+              </span>
+            </div>
+          )}
         </div>
 
         {error && (
