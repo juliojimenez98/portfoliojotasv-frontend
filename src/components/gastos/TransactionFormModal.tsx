@@ -71,7 +71,7 @@ export default function TransactionFormModal({
 }: TransactionFormModalProps) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    type: "expense" as "expense" | "income",
+    type: "expense" as "expense" | "income" | "transfer",
     accountId: "",
     description: "",
     originalAmount: "",
@@ -92,10 +92,7 @@ export default function TransactionFormModal({
     if (isOpen) {
       if (editingTransaction) {
         setForm({
-          type:
-            editingTransaction.type === "transfer"
-              ? "expense"
-              : editingTransaction.type,
+          type: editingTransaction.type,
           accountId:
             editingTransaction.accountId ||
             (accounts.length > 0 ? accounts[0]._id : ""),
@@ -698,14 +695,18 @@ export default function TransactionFormModal({
                 "flex-1 text-xs py-2.5 font-bold",
                 isExpense
                   ? "bg-danger hover:bg-danger/90 shadow-danger/25"
-                  : "bg-success hover:bg-success/90 shadow-success/25",
+                  : form.type === "transfer"
+                    ? "bg-primary hover:bg-primary/90 shadow-primary/25"
+                    : "bg-success hover:bg-success/90 shadow-success/25",
               )}
             >
               {editingTransaction
                 ? "✓ Guardar Cambios"
                 : isExpense
                   ? "↓ Registrar Gasto"
-                  : "↑ Registrar Ingreso"}
+                  : form.type === "transfer"
+                    ? "⇄ Guardar Transferencia"
+                    : "↑ Registrar Ingreso"}
             </Button>
           )}
         </div>

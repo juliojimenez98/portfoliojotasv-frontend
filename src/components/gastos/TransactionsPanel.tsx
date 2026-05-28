@@ -151,6 +151,40 @@ export default function TransactionsPanel({
     return acc?.name || "Desconocida";
   };
 
+  const handleExportExcel = () => {
+    const headers = ["Descripción", "Categoría", "Cuenta", "Fecha", "Tipo", "Monto (CLP)", "Notas"];
+    const rows = filtered.map((t) => {
+      const cat = getCatDisplay(t.category);
+      const dateStr = new Date(t.date).toLocaleDateString("es-CL");
+      const typeStr = t.type === "income" ? "Ingreso" : t.type === "transfer" ? "Transferencia" : "Gasto";
+      return [
+        t.description,
+        cat.label,
+        getAccountName(t.accountId),
+        dateStr,
+        typeStr,
+        t.amount,
+        t.notes || ""
+      ];
+    });
+
+    const csvContent = [
+      headers.join(";"),
+      ...rows.map((row) => row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(";"))
+    ].join("\n");
+
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `transacciones_${new Date().toLocaleDateString("es-CL").replace(/\//g, "-")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -164,6 +198,12 @@ export default function TransactionsPanel({
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-background-elevated hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-bold text-foreground active:scale-95 shadow-sm"
+          >
+            📥 Exportar Excel
+          </button>
           <Badge variant="primary">{filtered.length} resultados</Badge>
         </div>
       </div>
@@ -530,15 +570,13 @@ export default function TransactionsPanel({
                       </td>
                       <td className="py-3 px-1 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {txn.type !== "transfer" && (
-                            <button
-                              onClick={() => setEditingTxn(txn)}
-                              className="p-1.5 rounded-lg text-foreground-subtle hover:text-primary hover:bg-primary/10 transition-colors"
-                              title="Editar"
-                            >
-                              ✏️
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setEditingTxn(txn)}
+                            className="p-1.5 rounded-lg text-foreground-subtle hover:text-primary hover:bg-primary/10 transition-colors"
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
                           <DeleteTransactionButton transactionId={txn._id} />
                         </div>
                       </td>
