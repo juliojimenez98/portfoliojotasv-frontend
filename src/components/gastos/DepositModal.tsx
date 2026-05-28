@@ -40,9 +40,6 @@ export default function DepositModal({
   const [payingInternational, setPayingInternational] = useState(false);
   const [intlUSD, setIntlUSD] = useState("");
   const [fetchingRate, setFetchingRate] = useState(false);
-  const [autoRate, setAutoRate] = useState<number | null>(null);
-  const [customRate, setCustomRate] = useState("");
-  const [useCustomRate, setUseCustomRate] = useState(false);
 
   const hasInternational =
     account?.type === "credit_card" && !!account?.internationalCreditLimit;
@@ -54,22 +51,15 @@ export default function DepositModal({
     setError("");
     try {
       const data = await convertToCLP(usdAmt, "USD");
-      setAutoRate(data.exchangeRate);
       setAmount(Math.round(data.convertedAmount).toString());
-      setCustomRate(data.exchangeRate.toString());
     } catch {
       setError(
-        "No se pudo obtener la tasa automática. Ingresa la tasa manualmente.",
+        "No se pudo obtener la tasa automática. Por favor ingresa el monto en CLP manualmente.",
       );
-      setUseCustomRate(true);
     } finally {
       setFetchingRate(false);
     }
   };
-
-  const effectiveRate = useCustomRate
-    ? parseFloat(customRate) || 0
-    : (autoRate ?? 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,11 +81,6 @@ export default function DepositModal({
         setError("Ingresa el monto en USD");
         return;
       }
-      const rate = effectiveRate;
-      if (!rate || rate <= 0) {
-        setError("Ingresa la tasa de cambio");
-        return;
-      }
     }
 
     setLoading(true);
@@ -103,12 +88,13 @@ export default function DepositModal({
     try {
       if (payingInternational) {
         const usdAmt = parseFloat(intlUSD);
+        const calculatedRate = numAmount / usdAmt;
         await onSubmit(
           account._id,
           numAmount,
           description || undefined,
           usdAmt,
-          effectiveRate,
+          calculatedRate,
           fromAccountId || undefined,
         );
       } else {
@@ -135,9 +121,6 @@ export default function DepositModal({
     setError("");
     setPayingInternational(false);
     setIntlUSD("");
-    setAutoRate(null);
-    setCustomRate("");
-    setUseCustomRate(false);
     setFromAccountId("");
     onClose();
   };
@@ -147,7 +130,7 @@ export default function DepositModal({
   const usdNum = parseFloat(intlUSD) || 0;
   const clpNum = parseFloat(amount) || 0;
   const implicitRate =
-    usdNum > 0 && clpNum > 0 ? Math.round(clpNum / usdNum) : 0;
+    usdNum > 0 && clpNum > 0 ? clpNum / usdNum : 0;
 
   // Cálculos de porcentajes precisos para cupos (mostrando un decimal cuando corresponda)
   const nationalSpentPct = account.creditLimit
@@ -333,8 +316,6 @@ export default function DepositModal({
               setPayingInternational((v) => !v);
               setAmount("");
               setIntlUSD("");
-              setAutoRate(null);
-              setUseCustomRate(false);
               setError("");
             }}
             className="flex items-center gap-2 text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
@@ -350,10 +331,9 @@ export default function DepositModal({
 
         {/* International payment flow */}
         {payingInternational ? (
-          <div className="space-y-3 p-3.5 rounded-xl bg-primary/8 border border-primary/25">
+          <div className="space-y-3.5 p-3.5 rounded-xl bg-primary/8 border border-primary/25">
             <p className="text-xs text-foreground-muted">
-              Ingresa el monto del cobro en USD y te calculamos cuánto te cobró
-              el banco en CLP.
+              Ingresa el monto en USD y el total que te cobró el banco en CLP.
             </p>
 
             <div className="flex gap-2 items-end">
@@ -366,7 +346,6 @@ export default function DepositModal({
                   value={intlUSD}
                   onChange={(e) => {
                     setIntlUSD(e.target.value);
-                    setAutoRate(null);
                     setAmount("");
                   }}
                   placeholder="Ej: 29.99"
@@ -376,86 +355,52 @@ export default function DepositModal({
                 type="button"
                 onClick={handleFetchRate}
                 disabled={fetchingRate || !intlUSD || parseFloat(intlUSD) <= 0}
-                className="mb-0.5 px-3 py-2.5 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors whitespace-nowrap"
+                className="mb-0.5 px-3 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold disabled:opacity-50 hover:bg-primary/90 transition-colors whitespace-nowrap"
               >
-                {fetchingRate ? "…" : "🔄 Obtener tasa"}
+                {fetchingRate ? "…" : "⚡ Obtener tasa auto"}
               </button>
             </div>
 
-            {autoRate && !useCustomRate && (
-              <div className="p-3 rounded-xl bg-background-elevated border border-border space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-foreground-muted uppercase tracking-wider">
-                    Tasa automática
-                  </span>
-                  <span className="text-[10px] bg-primary/15 text-primary px-2 py-0.5 rounded-full font-mono">
-                    1 USD = {autoRate.toLocaleString("es-CL")} CLP
-                  </span>
-                </div>
-                <p className="text-xl font-bold text-foreground">
-                  {formatCurrency(parseFloat(amount))}
-                </p>
-                <p className="text-xs text-foreground-subtle">
-                  USD {intlUSD} × {autoRate.toLocaleString("es-CL")}
-                </p>
-              </div>
-            )}
+            <div>
+              <Input
+                label="Monto en CLP *"
+                type="number"
+                step="1"
+                min="1"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Ej: 91185"
+              />
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setUseCustomRate((v) => !v)}
-              className="text-xs font-semibold text-primary hover:underline"
-            >
-              {useCustomRate
-                ? "← Usar tasa automática"
-                : "✏️ El banco me cobró diferente — ingresar tasa real"}
-            </button>
-
-            {useCustomRate && (
+            {/* Show implicit rate message if we have both values */}
+            {usdNum > 0 && clpNum > 0 && (
               <div className="space-y-2">
-                <Input
-                  label="Tasa de cambio real (CLP por 1 USD) *"
-                  type="number"
-                  step="1"
-                  min="1"
-                  value={customRate}
-                  onChange={(e) => {
-                    setCustomRate(e.target.value);
-                    const r = parseFloat(e.target.value) || 0;
-                    const u = parseFloat(intlUSD) || 0;
-                    if (r > 0 && u > 0) setAmount(Math.round(u * r).toString());
-                  }}
-                  placeholder="Ej: 940"
-                />
-                {implicitRate > 0 && (
-                  <p className="text-xs text-foreground-muted">
-                    Monto en CLP:{" "}
-                    <span className="font-bold text-foreground">
-                      {formatCurrency(clpNum)}
-                    </span>
+                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-sm">
+                  <p className="text-foreground-muted text-xs">
+                    💡 ¡Ah! Entonces el banco te cobró el dólar a:
                   </p>
-                )}
-              </div>
-            )}
+                  <p className="text-lg font-black text-foreground">
+                    ${implicitRate.toLocaleString("es-CL", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    CLP
+                  </p>
+                </div>
 
-            {/* Show final CLP if we have it */}
-            {clpNum > 0 && usdNum > 0 && (
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-success/8 border border-success/20">
-                <span className="text-xs text-foreground-muted">
-                  Cupo a restaurar
-                </span>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-success">
-                    +USD {usdNum.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-foreground-subtle">
-                    {formatCurrency(clpNum)} CLP
-                  </p>
-                  {effectiveRate > 0 && (
-                    <p className="text-[10px] text-foreground-subtle font-mono">
-                      1 USD = {effectiveRate.toLocaleString("es-CL")} CLP
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-success/8 border border-success/20">
+                  <span className="text-xs text-foreground-muted font-medium">
+                    Cupo a restaurar
+                  </span>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-success">
+                      +USD {usdNum.toFixed(2)}
                     </p>
-                  )}
+                    <p className="text-xs text-foreground-subtle">
+                      {formatCurrency(clpNum)} CLP
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -517,7 +462,7 @@ export default function DepositModal({
             isLoading={loading}
             disabled={
               payingInternational
-                ? !intlUSD || !amount || !effectiveRate
+                ? !intlUSD || !amount
                 : !amount
             }
             className="flex-1"
