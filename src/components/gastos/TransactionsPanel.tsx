@@ -497,18 +497,18 @@ export default function TransactionsPanel({
                           <div
                             className={cn(
                               "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0",
-                              txn.type === "income"
-                                ? "bg-success/10 text-success"
-                                : txn.type === "transfer"
-                                  ? "bg-primary/10 text-primary"
-                                  : "bg-danger/10 text-danger",
+                              txn.type === "expense" || txn.category === "abono_tarjeta"
+                                ? "bg-danger/10 text-danger"
+                                : txn.type === "income"
+                                  ? "bg-success/10 text-success"
+                                  : "bg-primary/10 text-primary",
                             )}
                           >
-                            {txn.type === "income"
-                              ? "↑"
-                              : txn.type === "transfer"
-                                ? "⇄"
-                                : "↓"}
+                            {txn.type === "expense" || txn.category === "abono_tarjeta"
+                              ? "↓"
+                              : txn.type === "income"
+                                ? "↑"
+                                : "⇄"}
                           </div>
                           <div>
                             <p className="font-medium text-foreground line-clamp-1">
@@ -553,18 +553,18 @@ export default function TransactionsPanel({
                         <span
                           className={cn(
                             "font-bold whitespace-nowrap",
-                            txn.type === "income"
-                              ? "text-success"
-                              : txn.type === "transfer"
-                                ? "text-primary"
-                                : "text-danger",
+                            txn.type === "expense" || txn.category === "abono_tarjeta"
+                              ? "text-danger"
+                              : txn.type === "income"
+                                ? "text-success"
+                                : "text-primary",
                           )}
                         >
-                          {txn.type === "income"
-                            ? "+"
-                            : txn.type === "transfer"
-                              ? "⇄ "
-                              : "-"}
+                          {txn.type === "expense" || txn.category === "abono_tarjeta"
+                            ? "-"
+                            : txn.type === "income"
+                              ? "+"
+                              : "⇄ "}
                           {formatCurrency(txn.amount)}
                         </span>
                       </td>

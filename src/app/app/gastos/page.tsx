@@ -465,13 +465,13 @@ export default async function GastosDashboardPage({
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm ${txn.type === "income" ? "bg-success/10 text-success" : txn.type === "transfer" ? "bg-primary/10 text-primary" : "bg-danger/10 text-danger"}`}
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm ${txn.type === "expense" || txn.category === "abono_tarjeta" ? "bg-danger/10 text-danger" : txn.type === "income" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}
                       >
-                        {txn.type === "income"
-                          ? "↑"
-                          : txn.type === "transfer"
-                            ? "⇄"
-                            : "↓"}
+                        {txn.type === "expense" || txn.category === "abono_tarjeta"
+                          ? "↓"
+                          : txn.type === "income"
+                            ? "↑"
+                            : "⇄"}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">
@@ -494,13 +494,13 @@ export default async function GastosDashboardPage({
                     </div>
                     <div className="flex items-center gap-3">
                       <p
-                        className={`text-sm font-semibold ${txn.type === "income" ? "text-success" : txn.type === "transfer" ? "text-primary" : "text-danger"}`}
+                        className={`text-sm font-semibold ${txn.type === "expense" || txn.category === "abono_tarjeta" ? "text-danger" : txn.type === "income" ? "text-success" : "text-primary"}`}
                       >
-                        {txn.type === "income"
-                          ? "+"
-                          : txn.type === "transfer"
-                            ? "⇄ "
-                            : "-"}
+                        {txn.type === "expense" || txn.category === "abono_tarjeta"
+                          ? "-"
+                          : txn.type === "income"
+                            ? "+"
+                            : "⇄ "}
                         {formatCurrency(txn.amount)}
                       </p>
                       <DeleteTransactionButton transactionId={txn._id} />
