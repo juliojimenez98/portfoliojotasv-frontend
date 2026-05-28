@@ -100,6 +100,8 @@ export default function TransactionsPanel({
     return result;
   }, [
     transactions,
+    periods,
+    periodFilter,
     typeFilter,
     categoryFilter,
     accountFilter,
