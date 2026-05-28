@@ -64,6 +64,7 @@ export async function depositToAccount(
   internationalAmountUSD?: number,
   exchangeRate?: number,
   fromAccountId?: string,
+  isExpense?: boolean,
 ) {
   const body: any = { amount, description };
   if (internationalAmountUSD != null) {
@@ -72,6 +73,9 @@ export async function depositToAccount(
   }
   if (fromAccountId) {
     body.fromAccountId = fromAccountId;
+  }
+  if (isExpense !== undefined) {
+    body.isExpense = isExpense;
   }
   const res = await fetchWithAuth(`/api/accounts/${id}/deposit`, {
     method: "POST",

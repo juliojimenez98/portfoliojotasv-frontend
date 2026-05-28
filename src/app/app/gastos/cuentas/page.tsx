@@ -128,6 +128,7 @@ export default function CuentasPage() {
     internationalAmountUSD?: number,
     exchangeRate?: number,
     fromAccountId?: string,
+    isExpense?: boolean,
   ) => {
     await depositToAccount(
       accountId,
@@ -136,6 +137,7 @@ export default function CuentasPage() {
       internationalAmountUSD,
       exchangeRate,
       fromAccountId,
+      isExpense,
     );
     await fetchAccounts();
   };

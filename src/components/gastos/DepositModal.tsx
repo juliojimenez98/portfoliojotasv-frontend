@@ -18,6 +18,7 @@ interface DepositModalProps {
     internationalAmountUSD?: number,
     exchangeRate?: number,
     fromAccountId?: string,
+    isExpense?: boolean,
   ) => Promise<void>;
   account: IAccount | null;
   accounts?: IAccount[];
@@ -33,6 +34,7 @@ export default function DepositModal({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [fromAccountId, setFromAccountId] = useState("");
+  const [isExpense, setIsExpense] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -96,6 +98,7 @@ export default function DepositModal({
           usdAmt,
           calculatedRate,
           fromAccountId || undefined,
+          isExpense,
         );
       } else {
         await onSubmit(
@@ -105,6 +108,7 @@ export default function DepositModal({
           undefined,
           undefined,
           fromAccountId || undefined,
+          isExpense,
         );
       }
       handleClose();
@@ -122,6 +126,7 @@ export default function DepositModal({
     setPayingInternational(false);
     setIntlUSD("");
     setFromAccountId("");
+    setIsExpense(false);
     onClose();
   };
 
@@ -295,17 +300,36 @@ export default function DepositModal({
 
         {/* Source Account Selection (only for credit cards) */}
         {account.type === "credit_card" && (
-          <Select
-            label="Cuenta de origen (desde dónde pagas) *"
-            value={fromAccountId}
-            onChange={(e) => setFromAccountId(e.target.value)}
-            options={accounts
-              .filter((a) => a.type !== "credit_card" && a.isActive)
-              .map((a) => ({
-                value: a._id,
-                label: `${a.name} (${formatCurrency(a.balance, a.currency)})`,
-              }))}
-          />
+          <div className="space-y-3">
+            <Select
+              label="Cuenta de origen (desde dónde pagas) *"
+              value={fromAccountId}
+              onChange={(e) => setFromAccountId(e.target.value)}
+              options={accounts
+                .filter((a) => a.type !== "credit_card" && a.isActive)
+                .map((a) => ({
+                  value: a._id,
+                  label: `${a.name} (${formatCurrency(a.balance, a.currency)})`,
+                }))}
+            />
+
+            {fromAccountId && (
+              <button
+                type="button"
+                onClick={() => setIsExpense((v) => !v)}
+                className="flex items-center gap-2 text-xs font-semibold text-foreground-muted hover:text-foreground transition-colors p-1"
+              >
+                <span
+                  className={`w-4 h-4 rounded border-2 flex items-center justify-center text-[10px] transition-colors ${
+                    isExpense ? "bg-primary border-primary text-white" : "border-border"
+                  }`}
+                >
+                  {isExpense ? "✓" : ""}
+                </span>
+                💳 Contar como un gasto en mis estadísticas (Categoría: Abono a tarjeta)
+              </button>
+            )}
+          </div>
         )}
 
         {/* International toggle */}
