@@ -34,7 +34,7 @@ export default function DepositModal({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [fromAccountId, setFromAccountId] = useState("");
-  const [isExpense, setIsExpense] = useState(false);
+  const [isExpense, setIsExpense] = useState(account?.type === "credit_card");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -298,7 +298,6 @@ export default function DepositModal({
           </div>
         )}
 
-        {/* Source Account Selection (only for credit cards) */}
         {account.type === "credit_card" && (
           <div className="space-y-3">
             <Select
@@ -314,20 +313,10 @@ export default function DepositModal({
             />
 
             {fromAccountId && (
-              <button
-                type="button"
-                onClick={() => setIsExpense((v) => !v)}
-                className="flex items-center gap-2 text-xs font-semibold text-foreground-muted hover:text-foreground transition-colors p-1"
-              >
-                <span
-                  className={`w-4 h-4 rounded border-2 flex items-center justify-center text-[10px] transition-colors ${
-                    isExpense ? "bg-primary border-primary text-white" : "border-border"
-                  }`}
-                >
-                  {isExpense ? "✓" : ""}
-                </span>
-                💳 Contar como un gasto en mis estadísticas (Categoría: Abono a tarjeta)
-              </button>
+              <div className="flex items-center gap-2 text-xs font-semibold text-danger/80 p-2 rounded-lg bg-danger/5 border border-danger/10">
+                <span className="text-sm">💳</span>
+                Se registrará como gasto (Categoría: Abono a tarjeta)
+              </div>
             )}
           </div>
         )}
