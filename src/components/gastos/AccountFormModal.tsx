@@ -268,17 +268,15 @@ export default function AccountFormModal({
             />
           </div>
         ) : (
-          !isEdit && (
-            <Input
-              label="Balance inicial"
-              name="balance"
-              type="number"
-              step={form.currency === "CLP" ? "1" : "0.01"}
-              value={form.balance.toString()}
-              onChange={handleChange}
-              placeholder="0"
-            />
-          )
+          <Input
+            label={isEdit ? "Balance actual *" : "Balance inicial"}
+            name="balance"
+            type="number"
+            step={form.currency === "CLP" ? "1" : "0.01"}
+            value={form.balance.toString()}
+            onChange={handleChange}
+            placeholder="0"
+          />
         )}
 
         {/* International credit limit (credit cards only) */}

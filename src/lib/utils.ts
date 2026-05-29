@@ -87,12 +87,14 @@ export function isCreditCardPayment(txn: any): boolean {
   if (txn.type === 'transfer' || txn.category === 'transfer') {
     const desc = (txn.description || '').toLowerCase();
     const notes = (txn.notes || '').toLowerCase();
-    return (
+    // It must be the outgoing side (no 'desde' in notes) and match the description/notes patterns
+    const isOutgoing = !notes.includes('desde');
+    const matchesPattern =
       desc.includes('pago tarjeta') ||
       desc.includes('pago cupo internacional') ||
       notes.includes('pago de tarjeta de crédito') ||
-      notes.includes('pago de cupo internacional')
-    );
+      notes.includes('pago de cupo internacional');
+    return isOutgoing && matchesPattern;
   }
   return false;
 }
