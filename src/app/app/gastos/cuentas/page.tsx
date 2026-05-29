@@ -7,9 +7,11 @@ import Button from "@/components/ui/Button";
 import AccountFormModal from "@/components/gastos/AccountFormModal";
 import DepositModal from "@/components/gastos/DepositModal";
 import TransferModal from "@/components/gastos/TransferModal";
+import AccountDetailModal from "@/components/gastos/AccountDetailModal";
 import PaydayConfigModal, {
   paydaySummary,
 } from "@/components/gastos/PaydayConfigModal";
+import { getTransactions } from "@/actions/transactions";
 import {
   getAccounts,
   createAccount,
@@ -27,6 +29,7 @@ export const dynamic = "force-dynamic";
 
 import { formatCurrency } from "@/lib/utils";
 import type { IAccount } from "@/types/account";
+import type { ITransaction } from "@/types/transaction";
 import Modal from "@/components/ui/Modal";
 const typeLabels: Record<string, string> = {
   credit_card: "Tarjeta de Crédito",
@@ -59,6 +62,9 @@ export default function CuentasPage() {
   const [showDeposit, setShowDeposit] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showPayday, setShowPayday] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const [detailTransactions, setDetailTransactions] = useState<ITransaction[]>([]);
+  const [loadingDetailTransactions, setLoadingDetailTransactions] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isRecalculating, setIsRecalculating] = useState(false);
@@ -78,6 +84,27 @@ export default function CuentasPage() {
   // Payday config
   const [paydayConfig, setPaydayConfig] = useState<PaydayConfig | null>(null);
   const [paydayLoaded, setPaydayLoaded] = useState(false);
+
+  const openDetail = async (acc: IAccount) => {
+    setSelectedAccount(acc);
+    setShowDetail(true);
+    setLoadingDetailTransactions(true);
+    try {
+      const txs = await getTransactions({ accountId: acc._id });
+      setDetailTransactions(txs);
+    } catch {
+      setDetailTransactions([]);
+    } finally {
+      setLoadingDetailTransactions(false);
+    }
+  };
+
+  const handleUpdateBalance = async (newBalance: number) => {
+    if (!selectedAccount) return;
+    const updated = await updateAccount(selectedAccount._id, { balance: newBalance });
+    setSelectedAccount(updated);
+    await fetchAccounts();
+  };
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -227,11 +254,9 @@ export default function CuentasPage() {
               🔄 Transferir
             </Button>
           )}
-          {/* Corregir Balances — oculto temporalmente
           <Button variant="outline" onClick={handleOpenRecalcPreview}>
-            🔧 Corregir Balances
+            🔧 Recalcular Balances
           </Button>
-          */}
           <Button
             variant={paydayConfig ? "secondary" : "outline"}
             onClick={() => setShowPayday(true)}
@@ -468,6 +493,12 @@ export default function CuentasPage() {
                   </button>
                 )}
                 <button
+                  onClick={() => openDetail(acc)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
+                >
+                  🔍 Detalle
+                </button>
+                <button
                   onClick={() => openEdit(acc)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-foreground-muted bg-background-elevated hover:bg-white/10 transition-colors"
                 >
@@ -543,6 +574,19 @@ export default function CuentasPage() {
         onSaved={(cfg) => setPaydayConfig(cfg)}
       />
 
+      <AccountDetailModal
+        isOpen={showDetail}
+        onClose={() => {
+          setShowDetail(false);
+          setSelectedAccount(null);
+          setDetailTransactions([]);
+        }}
+        account={selectedAccount}
+        transactions={detailTransactions}
+        loading={loadingDetailTransactions}
+        onUpdateBalance={handleUpdateBalance}
+      />
+
       {/* Recalculate balances preview modal */}
       <Modal
         isOpen={!!recalcPreview}
@@ -554,14 +598,9 @@ export default function CuentasPage() {
           <div className="p-3 rounded-xl bg-warning/10 border border-warning/30 text-sm text-warning">
             <p className="font-bold mb-1">⚠️ ¿Qué hace esto?</p>
             <p className="text-foreground-muted text-xs leading-relaxed">
-              Redondea al entero más cercano los balances que tienen decimales
-              por errores de punto flotante (ej: <code>14995.0001 → 14995</code>
-              ).
-              <strong className="text-foreground">
-                {" "}
-                No recalcula desde transacciones
-              </strong>{" "}
-              — solo elimina la fracción decimal del balance actual.
+              Reconstruye y recalcula el saldo actual de cada cuenta a partir
+              del historial completo de sus transacciones. Esto solucionará
+              cualquier desfase o balance incorrecto acumulado en el sistema.
             </p>
           </div>
 
