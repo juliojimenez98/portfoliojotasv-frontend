@@ -450,9 +450,19 @@ export default async function GastosDashboardPage({
           ) : (
             <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2">
               {recent.map((txn) => {
+                const ccPayment = txn.category === "abono_tarjeta" || (
+                  (txn.type === "transfer" || txn.category === "transfer") && (
+                    (txn.description || "").toLowerCase().includes("pago tarjeta") ||
+                    (txn.description || "").toLowerCase().includes("pago cupo internacional") ||
+                    ((txn as any).notes || "").toLowerCase().includes("pago de tarjeta de crédito") ||
+                    ((txn as any).notes || "").toLowerCase().includes("pago de cupo internacional")
+                  )
+                );
+
                 const catObj = categories.find((c) => c.value === txn.category);
-                const catLabel =
-                  txn.category === "transfer"
+                const catLabel = ccPayment
+                  ? "💳 Abono a tarjeta credito"
+                  : txn.category === "transfer"
                     ? "🔄 Transferencia"
                     : catObj
                       ? `${catObj.icon || "📁"} ${catObj.label}`
@@ -465,9 +475,9 @@ export default async function GastosDashboardPage({
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm ${txn.type === "expense" || txn.category === "abono_tarjeta" ? "bg-danger/10 text-danger" : txn.type === "income" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm ${txn.type === "expense" || ccPayment ? "bg-danger/10 text-danger" : txn.type === "income" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}
                       >
-                        {txn.type === "expense" || txn.category === "abono_tarjeta"
+                        {txn.type === "expense" || ccPayment
                           ? "↓"
                           : txn.type === "income"
                             ? "↑"
@@ -494,9 +504,9 @@ export default async function GastosDashboardPage({
                     </div>
                     <div className="flex items-center gap-3">
                       <p
-                        className={`text-sm font-semibold ${txn.type === "expense" || txn.category === "abono_tarjeta" ? "text-danger" : txn.type === "income" ? "text-success" : "text-primary"}`}
+                        className={`text-sm font-semibold ${txn.type === "expense" || ccPayment ? "text-danger" : txn.type === "income" ? "text-success" : "text-primary"}`}
                       >
-                        {txn.type === "expense" || txn.category === "abono_tarjeta"
+                        {txn.type === "expense" || ccPayment
                           ? "-"
                           : txn.type === "income"
                             ? "+"

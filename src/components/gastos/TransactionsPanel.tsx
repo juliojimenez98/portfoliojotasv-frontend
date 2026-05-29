@@ -138,7 +138,24 @@ export default function TransactionsPanel({
     dateTo !== "" ||
     periodFilter !== "all";
 
-  const getCatDisplay = (catValue: string) => {
+  // Detect credit card payments even for legacy transactions with category "transfer"
+  const isCreditCardPayment = (txn: ITransaction) => {
+    if (txn.category === "abono_tarjeta") return true;
+    if (txn.type === "transfer" || txn.category === "transfer") {
+      const desc = (txn.description || "").toLowerCase();
+      const notes = ((txn as any).notes || "").toLowerCase();
+      return (
+        desc.includes("pago tarjeta") ||
+        desc.includes("pago cupo internacional") ||
+        notes.includes("pago de tarjeta de crédito") ||
+        notes.includes("pago de cupo internacional")
+      );
+    }
+    return false;
+  };
+
+  const getCatDisplay = (catValue: string, txn?: ITransaction) => {
+    if (txn && isCreditCardPayment(txn)) return { icon: "💳", label: "Abono a tarjeta credito" };
     if (catValue === "transfer") return { icon: "🔄", label: "Transferencia" };
     const cat = categories.find((c) => c.value === catValue);
     return cat
@@ -154,9 +171,10 @@ export default function TransactionsPanel({
   const handleExportExcel = () => {
     const headers = ["Descripción", "Categoría", "Cuenta", "Fecha", "Tipo", "Monto (CLP)", "Notas"];
     const rows = filtered.map((t) => {
-      const cat = getCatDisplay(t.category);
+      const cat = getCatDisplay(t.category, t);
       const dateStr = new Date(t.date).toLocaleDateString("es-CL");
-      const typeStr = t.type === "income" ? "Ingreso" : t.type === "transfer" ? "Transferencia" : "Gasto";
+      const isCCPayment = isCreditCardPayment(t);
+      const typeStr = t.type === "income" ? "Ingreso" : isCCPayment ? "Gasto (Abono tarjeta)" : t.type === "transfer" ? "Transferencia" : "Gasto";
       return [
         t.description,
         cat.label,
@@ -481,7 +499,8 @@ export default function TransactionsPanel({
               </thead>
               <tbody>
                 {filtered.map((txn) => {
-                  const cat = getCatDisplay(txn.category);
+                  const cat = getCatDisplay(txn.category, txn);
+                  const ccPayment = isCreditCardPayment(txn);
                   const dateStr = new Date(txn.date).toLocaleDateString(
                     "es-CL",
                     { day: "2-digit", month: "short", year: "numeric" },
@@ -497,14 +516,14 @@ export default function TransactionsPanel({
                           <div
                             className={cn(
                               "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0",
-                              txn.type === "expense" || txn.category === "abono_tarjeta"
+                              txn.type === "expense" || ccPayment
                                 ? "bg-danger/10 text-danger"
                                 : txn.type === "income"
                                   ? "bg-success/10 text-success"
                                   : "bg-primary/10 text-primary",
                             )}
                           >
-                            {txn.type === "expense" || txn.category === "abono_tarjeta"
+                            {txn.type === "expense" || ccPayment
                               ? "↓"
                               : txn.type === "income"
                                 ? "↑"
@@ -553,14 +572,14 @@ export default function TransactionsPanel({
                         <span
                           className={cn(
                             "font-bold whitespace-nowrap",
-                            txn.type === "expense" || txn.category === "abono_tarjeta"
+                            txn.type === "expense" || ccPayment
                               ? "text-danger"
                               : txn.type === "income"
                                 ? "text-success"
                                 : "text-primary",
                           )}
                         >
-                          {txn.type === "expense" || txn.category === "abono_tarjeta"
+                          {txn.type === "expense" || ccPayment
                             ? "-"
                             : txn.type === "income"
                               ? "+"
