@@ -5,7 +5,7 @@ import Card, { CardHeader } from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import DeleteTransactionButton from "./DeleteTransactionButton";
 import TransactionFormModal from "./TransactionFormModal";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn, isCreditCardPayment } from "@/lib/utils";
 import { updateTransaction } from "@/actions/transactions";
 import type { ITransaction, ICategory } from "@/types/transaction";
 import type { IAccount } from "@/types/account";
@@ -56,7 +56,15 @@ export default function TransactionsPanel({
 
     // Type filter
     if (typeFilter !== "all") {
-      result = result.filter((t) => t.type === typeFilter);
+      result = result.filter((t) => {
+        if (typeFilter === "expense") {
+          return t.type === "expense" || isCreditCardPayment(t);
+        }
+        if (typeFilter === "transfer") {
+          return t.type === "transfer" && !isCreditCardPayment(t);
+        }
+        return t.type === typeFilter;
+      });
     }
 
     // Category filter
@@ -116,7 +124,7 @@ export default function TransactionsPanel({
     .filter((t) => t.type === "income")
     .reduce((s, t) => s + t.amount, 0);
   const totalExpense = filtered
-    .filter((t) => t.type === "expense")
+    .filter((t) => t.type === "expense" || isCreditCardPayment(t))
     .reduce((s, t) => s + t.amount, 0);
 
   const clearFilters = () => {
@@ -137,22 +145,6 @@ export default function TransactionsPanel({
     dateFrom !== "" ||
     dateTo !== "" ||
     periodFilter !== "all";
-
-  // Detect credit card payments even for legacy transactions with category "transfer"
-  const isCreditCardPayment = (txn: ITransaction) => {
-    if (txn.category === "abono_tarjeta") return true;
-    if (txn.type === "transfer" || txn.category === "transfer") {
-      const desc = (txn.description || "").toLowerCase();
-      const notes = ((txn as any).notes || "").toLowerCase();
-      return (
-        desc.includes("pago tarjeta") ||
-        desc.includes("pago cupo internacional") ||
-        notes.includes("pago de tarjeta de crédito") ||
-        notes.includes("pago de cupo internacional")
-      );
-    }
-    return false;
-  };
 
   const getCatDisplay = (catValue: string, txn?: ITransaction) => {
     if (txn && isCreditCardPayment(txn)) return { icon: "💳", label: "Abono a tarjeta credito" };

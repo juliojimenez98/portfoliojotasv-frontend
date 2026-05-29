@@ -2,6 +2,8 @@
 
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { isCreditCardPayment } from "@/lib/utils";
+
 
 const API_URL = process.env.API_URL || "http://localhost:5002";
 
@@ -91,7 +93,7 @@ export async function deleteCategory(id: string) {
 
 export async function getMonthlyExpenseSummary(month: number, year: number) {
   const [txns, resAccounts] = await Promise.all([
-    getTransactions({ type: "expense" }),
+    getTransactions(),
     fetchWithAuth("/api/accounts"),
   ]);
 
@@ -99,7 +101,11 @@ export async function getMonthlyExpenseSummary(month: number, year: number) {
 
   const filtered = txns.filter((t: any) => {
     const d = new Date(t.date);
-    return d.getMonth() + 1 === month && d.getFullYear() === year;
+    return (
+      (t.type === "expense" || isCreditCardPayment(t)) &&
+      d.getMonth() + 1 === month &&
+      d.getFullYear() === year
+    );
   });
 
   const summaryMap: Record<
@@ -136,11 +142,12 @@ export async function getMonthlyExpenseSummary(month: number, year: number) {
 }
 
 export async function getCurrentMonthTotal() {
-  const txns = await getTransactions({ type: "expense" });
+  const txns = await getTransactions();
   const now = new Date();
   return txns
     .filter(
       (t: any) =>
+        (t.type === "expense" || isCreditCardPayment(t)) &&
         new Date(t.date).getMonth() === now.getMonth() &&
         new Date(t.date).getFullYear() === now.getFullYear(),
     )
@@ -148,10 +155,14 @@ export async function getCurrentMonthTotal() {
 }
 
 export async function getCurrentYearTotal() {
-  const txns = await getTransactions({ type: "expense" });
+  const txns = await getTransactions();
   const now = new Date();
   return txns
-    .filter((t: any) => new Date(t.date).getFullYear() === now.getFullYear())
+    .filter(
+      (t: any) =>
+        (t.type === "expense" || isCreditCardPayment(t)) &&
+        new Date(t.date).getFullYear() === now.getFullYear(),
+    )
     .reduce((acc: number, t: any) => acc + t.amount, 0);
 }
 
@@ -192,9 +203,9 @@ export async function getMonthlyComparisonSummary(year: number) {
 
     if (t.type === "income") {
       monthlyData[m].income += t.amount;
-    } else if (t.type === "expense") {
+    } else if (t.type === "expense" || isCreditCardPayment(t)) {
       monthlyData[m].expense += t.amount;
-      const cat = t.category || "other";
+      const cat = isCreditCardPayment(t) ? "abono_tarjeta" : (t.category || "other");
       monthlyData[m].categories[cat] =
         (monthlyData[m].categories[cat] || 0) + t.amount;
     }
@@ -217,3 +228,4 @@ export async function getMonthlyComparisonSummary(year: number) {
     };
   });
 }
+

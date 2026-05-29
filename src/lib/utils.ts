@@ -77,3 +77,23 @@ export function safeJsonParse<T>(str: string, fallback: T): T {
     return fallback;
   }
 }
+
+/**
+ * Helper to check if a transaction represents a payment to a credit card.
+ */
+export function isCreditCardPayment(txn: any): boolean {
+  if (!txn) return false;
+  if (txn.category === 'abono_tarjeta') return true;
+  if (txn.type === 'transfer' || txn.category === 'transfer') {
+    const desc = (txn.description || '').toLowerCase();
+    const notes = (txn.notes || '').toLowerCase();
+    return (
+      desc.includes('pago tarjeta') ||
+      desc.includes('pago cupo internacional') ||
+      notes.includes('pago de tarjeta de crédito') ||
+      notes.includes('pago de cupo internacional')
+    );
+  }
+  return false;
+}
+

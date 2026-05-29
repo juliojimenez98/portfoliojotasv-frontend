@@ -24,7 +24,7 @@ import NewTransactionButton from "@/components/gastos/NewTransactionButton";
 import DeleteTransactionButton from "@/components/gastos/DeleteTransactionButton";
 import CategoryChartCard from "@/components/gastos/CategoryChartCard";
 import ActivePeriodBanner from "@/components/gastos/ActivePeriodBanner";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, isCreditCardPayment } from "@/lib/utils";
 import type { IAccount } from "@/types/account";
 import type { ITransaction, MonthlyExpenseSummary } from "@/types/transaction";
 import type { ISpendPeriod } from "@/types/period";
@@ -117,7 +117,7 @@ export default async function GastosDashboardPage({
   };
 
   const periodExpenses = displayedTransactions.filter(
-    (t) => t.type === "expense" && isInRange(t.date),
+    (t) => (t.type === "expense" || isCreditCardPayment(t)) && isInRange(t.date),
   );
   const periodIncome = displayedTransactions.filter(
     (t) => t.type === "income" && isInRange(t.date),
@@ -178,7 +178,7 @@ export default async function GastosDashboardPage({
     };
   }
   for (const t of periodExpenses) {
-    const catVal = t.category || "other";
+    const catVal = isCreditCardPayment(t) ? "abono_tarjeta" : (t.category || "other");
     if (!categoryMap[catVal])
       categoryMap[catVal] = { total: 0, count: 0, label: catVal, icon: "📁" };
     categoryMap[catVal].total += t.amount;
