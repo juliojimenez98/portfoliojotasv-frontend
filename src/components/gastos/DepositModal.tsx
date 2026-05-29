@@ -34,7 +34,8 @@ export default function DepositModal({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [fromAccountId, setFromAccountId] = useState("");
-  const [isExpense, setIsExpense] = useState(account?.type === "credit_card");
+  // Credit card abonos are always expenses — no state needed
+  const isExpense = account?.type === "credit_card";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -126,7 +127,7 @@ export default function DepositModal({
     setPayingInternational(false);
     setIntlUSD("");
     setFromAccountId("");
-    setIsExpense(false);
+
     onClose();
   };
 
