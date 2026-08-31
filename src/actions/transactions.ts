@@ -48,6 +48,26 @@ export async function createTransaction(data: any) {
   return res.data;
 }
 
+export async function createBulkTransactions(
+  accountId: string,
+  transactions: Array<{
+    description: string;
+    amount: number;
+    category: string;
+    date: string;
+    notes?: string;
+  }>,
+) {
+  const res = await fetchWithAuth("/api/transactions/bulk", {
+    method: "POST",
+    body: JSON.stringify({ accountId, transactions }),
+  });
+  revalidatePath("/app/gastos");
+  revalidatePath("/app/gastos/transacciones");
+  revalidatePath("/app/gastos/cuentas");
+  return res.data;
+}
+
 export async function updateTransaction(id: string, data: any) {
   const res = await fetchWithAuth(`/api/transactions/${id}`, {
     method: "PUT",

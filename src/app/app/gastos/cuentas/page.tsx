@@ -8,10 +8,11 @@ import AccountFormModal from "@/components/gastos/AccountFormModal";
 import DepositModal from "@/components/gastos/DepositModal";
 import TransferModal from "@/components/gastos/TransferModal";
 import AccountDetailModal from "@/components/gastos/AccountDetailModal";
+import BulkExpenseModal from "@/components/gastos/BulkExpenseModal";
 import PaydayConfigModal, {
   paydaySummary,
 } from "@/components/gastos/PaydayConfigModal";
-import { getTransactions } from "@/actions/transactions";
+import { getTransactions, getTransactionCategories } from "@/actions/transactions";
 import {
   getAccounts,
   createAccount,
@@ -29,7 +30,7 @@ export const dynamic = "force-dynamic";
 
 import { formatCurrency } from "@/lib/utils";
 import type { IAccount } from "@/types/account";
-import type { ITransaction } from "@/types/transaction";
+import type { ITransaction, ICategory } from "@/types/transaction";
 import Modal from "@/components/ui/Modal";
 const typeLabels: Record<string, string> = {
   credit_card: "Tarjeta de Crédito",
@@ -63,6 +64,9 @@ export default function CuentasPage() {
   const [showTransfer, setShowTransfer] = useState(false);
   const [showPayday, setShowPayday] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
+  const [bulkAccountId, setBulkAccountId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<ICategory[]>([]);
   const [detailTransactions, setDetailTransactions] = useState<ITransaction[]>([]);
   const [loadingDetailTransactions, setLoadingDetailTransactions] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
@@ -99,6 +103,11 @@ export default function CuentasPage() {
     }
   };
 
+  const openBulkModal = (accountId?: string) => {
+    setBulkAccountId(accountId || null);
+    setShowBulk(true);
+  };
+
   const handleUpdateBalance = async (newBalance: number) => {
     if (!selectedAccount) return;
     const updated = await updateAccount(selectedAccount._id, { balance: newBalance });
@@ -119,6 +128,10 @@ export default function CuentasPage() {
 
   useEffect(() => {
     fetchAccounts();
+    // Load categories
+    getTransactionCategories()
+      .then((cats) => setCategories(cats || []))
+      .catch(() => setCategories([]));
     // Load payday config once
     getPaydayConfig()
       .then((cfg) => setPaydayConfig(cfg))
@@ -254,6 +267,9 @@ export default function CuentasPage() {
               🔄 Transferir
             </Button>
           )}
+          <Button variant="outline" onClick={() => openBulkModal()}>
+            📊 Carga Masiva
+          </Button>
           <Button variant="outline" onClick={handleOpenRecalcPreview}>
             🔧 Recalcular Balances
           </Button>
@@ -499,6 +515,12 @@ export default function CuentasPage() {
                   🔍 Detalle
                 </button>
                 <button
+                  onClick={() => openBulkModal(acc._id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
+                >
+                  📊 Carga Masiva
+                </button>
+                <button
                   onClick={() => openEdit(acc)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-foreground-muted bg-background-elevated hover:bg-white/10 transition-colors"
                 >
@@ -585,6 +607,18 @@ export default function CuentasPage() {
         transactions={detailTransactions}
         loading={loadingDetailTransactions}
         onUpdateBalance={handleUpdateBalance}
+      />
+
+      <BulkExpenseModal
+        isOpen={showBulk}
+        onClose={() => {
+          setShowBulk(false);
+          setBulkAccountId(null);
+        }}
+        accounts={accounts}
+        categories={categories}
+        preselectedAccountId={bulkAccountId}
+        onSuccess={fetchAccounts}
       />
 
       {/* Recalculate balances preview modal */}

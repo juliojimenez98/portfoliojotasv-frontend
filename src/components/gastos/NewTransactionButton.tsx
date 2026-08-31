@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Button from "@/components/ui/Button";
 import TransactionFormModal from "./TransactionFormModal";
 import CategoryManagementModal from "./CategoryManagementModal";
+import BulkExpenseModal from "./BulkExpenseModal";
 import { createTransaction } from "@/actions/transactions";
 import type { IAccount } from "@/types/account";
 import type { ICategory, ITransaction } from "@/types/transaction";
@@ -21,6 +22,7 @@ export default function NewTransactionButton({
 }: NewTransactionButtonProps) {
   const [isTxnOpen, setIsTxnOpen] = useState(false);
   const [isCatOpen, setIsCatOpen] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
 
   const handleSubmit = async (data: any) => {
     await createTransaction(data);
@@ -34,6 +36,13 @@ export default function NewTransactionButton({
         className="flex items-center gap-1.5 shadow-sm text-xs py-2"
       >
         <span>⚙️</span> Categorías
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => setIsBulkOpen(true)}
+        className="flex items-center gap-1.5 shadow-sm text-xs py-2"
+      >
+        <span>📊</span> Carga Masiva
       </Button>
       <Button
         onClick={() => setIsTxnOpen(true)}
@@ -51,6 +60,13 @@ export default function NewTransactionButton({
         transactions={transactions}
       />
 
+      <BulkExpenseModal
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        accounts={accounts}
+        categories={categories}
+      />
+
       <CategoryManagementModal
         isOpen={isCatOpen}
         onClose={() => setIsCatOpen(false)}
@@ -59,3 +75,4 @@ export default function NewTransactionButton({
     </div>
   );
 }
+

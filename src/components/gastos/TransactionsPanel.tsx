@@ -5,6 +5,7 @@ import Card, { CardHeader } from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import DeleteTransactionButton from "./DeleteTransactionButton";
 import TransactionFormModal from "./TransactionFormModal";
+import BulkExpenseModal from "./BulkExpenseModal";
 import { formatCurrency, cn, isCreditCardPayment } from "@/lib/utils";
 import { updateTransaction } from "@/actions/transactions";
 import type { ITransaction, ICategory } from "@/types/transaction";
@@ -24,6 +25,7 @@ export default function TransactionsPanel({
   accounts,
   periods = [],
 }: TransactionsPanelProps) {
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<
     "all" | "income" | "expense" | "transfer"
   >("all");
@@ -208,6 +210,12 @@ export default function TransactionsPanel({
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsBulkOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-background-elevated hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-bold text-foreground active:scale-95 shadow-sm"
+          >
+            📊 Carga Masiva
+          </button>
           <button
             onClick={handleExportExcel}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-background-elevated hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-bold text-foreground active:scale-95 shadow-sm"
@@ -614,6 +622,14 @@ export default function TransactionsPanel({
         categories={categories}
         editingTransaction={editingTxn}
         transactions={transactions}
+      />
+
+      {/* Bulk Expense Modal */}
+      <BulkExpenseModal
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        accounts={accounts}
+        categories={categories}
       />
     </div>
   );
