@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { Select } from "@/components/ui/Input";
@@ -26,6 +26,15 @@ interface ExpenseRow {
   amount: string;
   notes: string;
 }
+
+interface BulkDraft {
+  accountId: string;
+  globalDate: string;
+  rows: ExpenseRow[];
+  savedAt: string;
+}
+
+const STORAGE_KEY = "ecosistema_bulk_expense_draft_v1";
 
 const getLocalDateString = (dateInput: Date | string | number = new Date()) => {
   const d = new Date(dateInput);
@@ -65,30 +74,107 @@ export default function BulkExpenseModal({
   const [error, setError] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [showPasteBox, setShowPasteBox] = useState(false);
+  const [savedDraft, setSavedDraft] = useState<BulkDraft | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize or reset modal
+  // Initialize or check draft when modal opens
   useEffect(() => {
-    if (isOpen) {
-      const initialAccountId =
-        preselectedAccountId ||
-        (accounts.length > 0 ? accounts[0]._id : "");
-      setSelectedAccountId(initialAccountId);
-      setGlobalDate(todayStr);
-      setError("");
-      setShowPasteBox(false);
-      setPasteText("");
-
-      // Create 5 initial empty rows
-      setRows([
-        createEmptyRow(defaultCategoryValue, todayStr),
-        createEmptyRow(defaultCategoryValue, todayStr),
-        createEmptyRow(defaultCategoryValue, todayStr),
-        createEmptyRow(defaultCategoryValue, todayStr),
-        createEmptyRow(defaultCategoryValue, todayStr),
-      ]);
+    if (!isOpen) {
+      setIsInitialized(false);
+      return;
     }
+
+    const initialAccountId =
+      preselectedAccountId || (accounts.length > 0 ? accounts[0]._id : "");
+    setSelectedAccountId(initialAccountId);
+    setGlobalDate(todayStr);
+    setError("");
+    setShowPasteBox(false);
+    setPasteText("");
+
+    // Check for draft in localStorage
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed: BulkDraft = JSON.parse(stored);
+        const hasData =
+          Array.isArray(parsed.rows) &&
+          parsed.rows.some(
+            (r) => r.description.trim() !== "" || (parseFloat(r.amount) || 0) > 0,
+          );
+
+        if (hasData) {
+          setSavedDraft(parsed);
+          // Set standard empty rows while user decides
+          setRows([
+            createEmptyRow(defaultCategoryValue, todayStr),
+            createEmptyRow(defaultCategoryValue, todayStr),
+            createEmptyRow(defaultCategoryValue, todayStr),
+            createEmptyRow(defaultCategoryValue, todayStr),
+            createEmptyRow(defaultCategoryValue, todayStr),
+          ]);
+          setIsInitialized(true);
+          return;
+        }
+      }
+    } catch {
+      // Ignore parse error
+    }
+
+    setSavedDraft(null);
+    setRows([
+      createEmptyRow(defaultCategoryValue, todayStr),
+      createEmptyRow(defaultCategoryValue, todayStr),
+      createEmptyRow(defaultCategoryValue, todayStr),
+      createEmptyRow(defaultCategoryValue, todayStr),
+      createEmptyRow(defaultCategoryValue, todayStr),
+    ]);
+    setIsInitialized(true);
   }, [isOpen, preselectedAccountId, accounts, defaultCategoryValue, todayStr]);
+
+  // Auto-save draft when user makes changes
+  useEffect(() => {
+    if (!isOpen || !isInitialized) return;
+
+    const hasMeaningfulContent = rows.some(
+      (r) => r.description.trim() !== "" || (parseFloat(r.amount) || 0) > 0,
+    );
+
+    if (hasMeaningfulContent && selectedAccountId) {
+      const draft: BulkDraft = {
+        accountId: selectedAccountId,
+        globalDate,
+        rows,
+        savedAt: new Date().toISOString(),
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+      } catch {}
+    }
+  }, [rows, selectedAccountId, globalDate, isOpen, isInitialized]);
+
+  const handleRestoreDraft = () => {
+    if (!savedDraft) return;
+
+    if (savedDraft.accountId) {
+      setSelectedAccountId(savedDraft.accountId);
+    }
+    if (savedDraft.globalDate) {
+      setGlobalDate(savedDraft.globalDate);
+    }
+    if (Array.isArray(savedDraft.rows) && savedDraft.rows.length > 0) {
+      setRows(savedDraft.rows);
+    }
+    setSavedDraft(null);
+  };
+
+  const handleDiscardDraft = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+    setSavedDraft(null);
+  };
 
   const selectedAccount = accounts.find((a) => a._id === selectedAccountId);
 
@@ -112,7 +198,6 @@ export default function BulkExpenseModal({
 
   const handleDeleteRow = (id: string) => {
     if (rows.length === 1) {
-      // If last row, just clear it
       setRows([createEmptyRow(defaultCategoryValue, globalDate)]);
       return;
     }
@@ -142,7 +227,6 @@ export default function BulkExpenseModal({
     const parsedRows: ExpenseRow[] = [];
 
     for (const line of lines) {
-      // Split by tab (Excel/Sheets copy) or comma/semicolon (CSV copy)
       let cols = line.split("\t");
       if (cols.length === 1 && line.includes(";")) {
         cols = line.split(";");
@@ -153,12 +237,6 @@ export default function BulkExpenseModal({
       cols = cols.map((c) => c.trim().replace(/^["']|["']$/g, ""));
       if (cols.length === 0 || cols.every((c) => !c)) continue;
 
-      // Guess column mapping:
-      // Common formats:
-      // 1. [Description, Amount]
-      // 2. [Date, Description, Amount]
-      // 3. [Description, Category, Amount]
-      // 4. [Date, Description, Category, Amount, Notes]
       let dateVal = globalDate;
       let descVal = "";
       let catVal = defaultCategoryValue;
@@ -166,7 +244,6 @@ export default function BulkExpenseModal({
       let notesVal = "";
 
       if (cols.length === 1) {
-        // Just description or amount
         const num = parseFloat(cols[0].replace(/[^0-9.-]/g, ""));
         if (!isNaN(num) && num > 0) {
           amountVal = String(num);
@@ -174,7 +251,6 @@ export default function BulkExpenseModal({
           descVal = cols[0];
         }
       } else if (cols.length === 2) {
-        // [Desc, Amount] or [Amount, Desc]
         const num1 = parseFloat(cols[0].replace(/[^0-9.-]/g, ""));
         const num2 = parseFloat(cols[1].replace(/[^0-9.-]/g, ""));
         if (!isNaN(num2) && num2 > 0) {
@@ -188,7 +264,6 @@ export default function BulkExpenseModal({
           notesVal = cols[1];
         }
       } else if (cols.length === 3) {
-        // Check if col 0 is date
         if (cols[0].match(/^\d{4}-\d{2}-\d{2}$/) || cols[0].match(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/)) {
           dateVal = cols[0].includes("/") ? getLocalDateString(new Date(cols[0])) : cols[0];
           descVal = cols[1];
@@ -196,7 +271,6 @@ export default function BulkExpenseModal({
           if (!isNaN(num)) amountVal = String(num);
         } else {
           descVal = cols[0];
-          // Check if col 1 matches category
           const foundCat = categories.find(
             (c) =>
               c.label.toLowerCase() === cols[1].toLowerCase() ||
@@ -207,7 +281,6 @@ export default function BulkExpenseModal({
           if (!isNaN(num)) amountVal = String(num);
         }
       } else {
-        // 4 or more columns
         let idx = 0;
         if (cols[0].match(/^\d{4}-\d{2}-\d{2}$/) || cols[0].match(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/)) {
           dateVal = cols[0].includes("/") ? getLocalDateString(new Date(cols[0])) : cols[0];
@@ -291,6 +364,13 @@ export default function BulkExpenseModal({
       }));
 
       await createBulkTransactions(selectedAccountId, payload);
+
+      // Clear draft on successful submission
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {}
+      setSavedDraft(null);
+
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: any) {
@@ -305,23 +385,78 @@ export default function BulkExpenseModal({
     label: `${a.type === "credit_card" ? "💳" : "🏦"} ${a.name} (${formatCurrency(a.balance, a.currency)})`,
   }));
 
+  const draftAccountName = savedDraft
+    ? accounts.find((a) => a._id === savedDraft.accountId)?.name || "Cuenta"
+    : "";
+
+  const draftValidCount = savedDraft
+    ? savedDraft.rows.filter(
+        (r) => r.description.trim() !== "" || (parseFloat(r.amount) || 0) > 0,
+      ).length
+    : 0;
+
+  const draftTotalAmount = savedDraft
+    ? savedDraft.rows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0)
+    : 0;
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="📊 Carga Masiva de Gastos (Tabla tipo Excel)"
-      size="xl"
+      size="6xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Draft Recovery Prompt */}
+        {savedDraft && (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 text-amber-200 animate-fade-in shadow-lg">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl mt-0.5">💾</span>
+              <div>
+                <p className="font-bold text-sm text-foreground flex items-center gap-2">
+                  <span>Borrador guardado automáticamente</span>
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    {new Date(savedDraft.savedAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </p>
+                <p className="text-xs text-foreground-muted mt-0.5">
+                  Contiene <strong>{draftValidCount} gastos</strong> por un total de{" "}
+                  <strong>{formatCurrency(draftTotalAmount)}</strong> para{" "}
+                  <span className="text-amber-400 font-semibold">{draftAccountName}</span>.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                className="px-3 py-1.5 rounded-xl border border-border bg-background hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-all text-xs font-semibold text-foreground-muted"
+              >
+                🗑️ Descartar
+              </button>
+              <button
+                type="button"
+                onClick={handleRestoreDraft}
+                className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all text-xs active:scale-95 shadow-md shadow-amber-500/25"
+              >
+                ✨ Recuperar Borrador
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && (
-          <div className="p-3 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm font-medium">
+          <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm font-medium">
             ⚠️ {error}
           </div>
         )}
 
         {/* Top bar: Account Selector & Batch Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-2xl bg-background-elevated border border-border">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 rounded-2xl bg-background-elevated border border-border">
+          <div className="md:col-span-6">
             <Select
               label="Cuenta de cargo *"
               value={selectedAccountId}
@@ -330,7 +465,7 @@ export default function BulkExpenseModal({
             />
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-xl bg-background border border-border">
+          <div className="md:col-span-3 flex items-center justify-between p-3 rounded-xl bg-background border border-border">
             <div>
               <p className="text-[10px] uppercase font-bold text-foreground-muted tracking-wider">
                 Saldo Actual
@@ -344,7 +479,7 @@ export default function BulkExpenseModal({
             <span className="text-xl">🏦</span>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/25">
+          <div className="md:col-span-3 flex items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/25">
             <div>
               <p className="text-[10px] uppercase font-bold text-primary tracking-wider">
                 Saldo Proyectado
@@ -376,7 +511,7 @@ export default function BulkExpenseModal({
             <button
               type="button"
               onClick={handleApplyGlobalDate}
-              className="px-2.5 py-1 rounded-lg bg-background border border-border hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-medium text-foreground-muted hover:text-foreground"
+              className="px-3 py-1 rounded-lg bg-background border border-border hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-medium text-foreground-muted hover:text-foreground active:scale-95"
             >
               Aplicar a todas
             </button>
@@ -386,9 +521,9 @@ export default function BulkExpenseModal({
             <button
               type="button"
               onClick={() => setShowPasteBox(!showPasteBox)}
-              className="flex items-center gap-1 px-3 py-1 rounded-lg bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 font-bold transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary/15 text-primary border border-primary/25 hover:bg-primary/25 font-bold transition-all active:scale-95 shadow-sm"
             >
-              📋 {showPasteBox ? "Ocultar Pegado" : "Pegar desde Excel"}
+              📋 {showPasteBox ? "Ocultar Pegado" : "Pegar desde Excel / Sheets"}
             </button>
           </div>
         </div>
@@ -401,15 +536,15 @@ export default function BulkExpenseModal({
                 Pegar celdas copiadas de Excel / Google Sheets:
               </label>
               <span className="text-[11px] text-foreground-muted">
-                (Detecta columnas: Descripción, Monto, Fecha, Categoría)
+                (Detecta columnas: Descripción, Monto, Fecha, Categoría, Notas)
               </span>
             </div>
             <textarea
               rows={3}
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
-              placeholder={"Supermercado\t45000\nBencina\t30000\nFarmacia\t12500"}
-              className="w-full p-2.5 text-xs font-mono rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              placeholder={"Supermercado Lider\t45000\nBencina Copec\t30000\nFarmacia Cruz Verde\t12500"}
+              className="w-full p-3 text-xs font-mono rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 leading-relaxed"
             />
             <div className="flex justify-end gap-2">
               <Button
@@ -423,7 +558,7 @@ export default function BulkExpenseModal({
               <Button
                 type="button"
                 onClick={handleParsePaste}
-                className="text-xs py-1.5 px-4"
+                className="text-xs py-1.5 px-4 font-bold"
               >
                 ⚡ Importar a la Tabla
               </Button>
@@ -434,18 +569,18 @@ export default function BulkExpenseModal({
         {/* Interactive Spreadsheet Table */}
         <div
           ref={tableContainerRef}
-          className="border border-border rounded-xl overflow-hidden max-h-[380px] overflow-y-auto bg-background"
+          className="border border-border rounded-xl overflow-x-auto overflow-y-auto max-h-[420px] bg-background shadow-inner"
         >
-          <table className="w-full text-xs text-left border-collapse">
+          <table className="min-w-[860px] w-full text-xs text-left border-collapse">
             <thead className="sticky top-0 z-10 bg-background-elevated border-b border-border shadow-sm">
               <tr className="text-foreground-muted font-bold uppercase tracking-wider">
-                <th className="py-2.5 px-2 text-center w-8">#</th>
-                <th className="py-2.5 px-2 w-32">Fecha</th>
-                <th className="py-2.5 px-2 min-w-[160px]">Descripción *</th>
-                <th className="py-2.5 px-2 w-44">Categoría *</th>
-                <th className="py-2.5 px-2 w-32">Monto ($) *</th>
-                <th className="py-2.5 px-2 min-w-[120px]">Notas</th>
-                <th className="py-2.5 px-2 text-center w-10"></th>
+                <th className="py-3 px-2 text-center w-10">#</th>
+                <th className="py-3 px-2 w-36">Fecha</th>
+                <th className="py-3 px-2 min-w-[220px]">Descripción *</th>
+                <th className="py-3 px-2 w-48">Categoría *</th>
+                <th className="py-3 px-2 w-36 text-right">Monto ($) *</th>
+                <th className="py-3 px-2 min-w-[180px]">Notas (Opcional)</th>
+                <th className="py-3 px-2 text-center w-12"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -458,39 +593,39 @@ export default function BulkExpenseModal({
                     key={row.id}
                     className={`group transition-colors ${
                       isComplete
-                        ? "bg-success/[0.03] hover:bg-success/[0.06]"
+                        ? "bg-success/[0.04] hover:bg-success/[0.07]"
                         : "hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
                     }`}
                   >
-                    <td className="py-2 px-2 text-center font-mono text-foreground-subtle">
+                    <td className="py-2.5 px-2 text-center font-mono text-foreground-subtle font-medium">
                       {idx + 1}
                     </td>
-                    <td className="py-2 px-1">
+                    <td className="py-2.5 px-1.5">
                       <input
                         type="date"
                         value={row.date}
                         onChange={(e) => handleRowChange(row.id, "date", e.target.value)}
-                        className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary text-xs"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary text-xs"
                       />
                     </td>
-                    <td className="py-2 px-1">
+                    <td className="py-2.5 px-1.5">
                       <input
                         type="text"
                         value={row.description}
                         onChange={(e) =>
                           handleRowChange(row.id, "description", e.target.value)
                         }
-                        placeholder="Ej: Supermercado"
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary text-xs"
+                        placeholder="Ej: Supermercado Lider"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary text-xs"
                       />
                     </td>
-                    <td className="py-2 px-1">
+                    <td className="py-2.5 px-1.5">
                       <select
                         value={row.category}
                         onChange={(e) =>
                           handleRowChange(row.id, "category", e.target.value)
                         }
-                        className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary text-xs cursor-pointer"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary text-xs cursor-pointer"
                       >
                         {categories.map((c) => (
                           <option key={c.value} value={c.value}>
@@ -499,30 +634,30 @@ export default function BulkExpenseModal({
                         ))}
                       </select>
                     </td>
-                    <td className="py-2 px-1">
+                    <td className="py-2.5 px-1.5">
                       <input
                         type="number"
                         step={selectedAccount?.currency === "CLP" ? "1" : "0.01"}
                         value={row.amount}
                         onChange={(e) => handleRowChange(row.id, "amount", e.target.value)}
                         placeholder="0"
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-primary text-xs text-right font-mono"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-primary text-xs text-right font-mono"
                       />
                     </td>
-                    <td className="py-2 px-1">
+                    <td className="py-2.5 px-1.5">
                       <input
                         type="text"
                         value={row.notes}
                         onChange={(e) => handleRowChange(row.id, "notes", e.target.value)}
                         placeholder="Opcional"
-                        className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-foreground-muted focus:text-foreground focus:outline-none focus:ring-1 focus:ring-primary text-xs"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-foreground-muted focus:text-foreground focus:outline-none focus:ring-1 focus:ring-primary text-xs"
                       />
                     </td>
-                    <td className="py-2 px-1 text-center">
+                    <td className="py-2.5 px-1.5 text-center">
                       <button
                         type="button"
                         onClick={() => handleDeleteRow(row.id)}
-                        className="p-1.5 rounded-lg text-foreground-subtle hover:text-danger hover:bg-danger/10 transition-colors opacity-60 group-hover:opacity-100"
+                        className="p-1.5 rounded-lg text-foreground-subtle hover:text-danger hover:bg-danger/10 transition-colors opacity-70 group-hover:opacity-100"
                         title="Eliminar fila"
                       >
                         🗑️
@@ -536,19 +671,19 @@ export default function BulkExpenseModal({
         </div>
 
         {/* Row Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleAddRow}
-              className="px-3 py-1.5 rounded-xl border border-border bg-background-elevated hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-bold text-foreground active:scale-95 shadow-sm"
+              className="px-3.5 py-2 rounded-xl border border-border bg-background-elevated hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-bold text-foreground active:scale-95 shadow-sm"
             >
               + Agregar Fila
             </button>
             <button
               type="button"
               onClick={() => handleAddMultipleRows(5)}
-              className="px-3 py-1.5 rounded-xl border border-border bg-background-elevated hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-medium text-foreground-muted hover:text-foreground active:scale-95"
+              className="px-3.5 py-2 rounded-xl border border-border bg-background-elevated hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-medium text-foreground-muted hover:text-foreground active:scale-95"
             >
               + 5 Filas
             </button>
@@ -556,7 +691,7 @@ export default function BulkExpenseModal({
               <button
                 type="button"
                 onClick={handleClearEmptyRows}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-medium text-foreground-subtle hover:text-danger transition-colors"
+                className="px-3 py-2 rounded-xl text-xs font-medium text-foreground-subtle hover:text-danger hover:bg-danger/10 transition-colors"
               >
                 Limpiar vacías
               </button>
@@ -564,13 +699,13 @@ export default function BulkExpenseModal({
           </div>
 
           {/* Live Summary Bar */}
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-3 text-xs">
             <span className="text-foreground-muted">
               <strong className="text-foreground">{validRows.length}</strong> de{" "}
               {rows.length} válidas
             </span>
-            <div className="px-3 py-1.5 rounded-xl bg-danger/10 border border-danger/20">
-              <span className="text-danger font-bold">
+            <div className="px-3.5 py-1.5 rounded-xl bg-danger/10 border border-danger/25">
+              <span className="text-danger font-bold text-sm">
                 Total: -{formatCurrency(totalBatchAmount, selectedAccount?.currency)}
               </span>
             </div>
@@ -583,7 +718,7 @@ export default function BulkExpenseModal({
             type="button"
             variant="secondary"
             onClick={onClose}
-            className="flex-1"
+            className="flex-1 py-2.5"
           >
             Cancelar
           </Button>
@@ -591,7 +726,7 @@ export default function BulkExpenseModal({
             type="submit"
             isLoading={loading}
             disabled={validRows.length === 0 || !selectedAccountId}
-            className="flex-1 font-bold shadow-lg shadow-primary/25"
+            className="flex-1 font-bold py-2.5 shadow-lg shadow-primary/25"
           >
             📥 Registrar {validRows.length} Gasto{validRows.length !== 1 ? "s" : ""} (
             {formatCurrency(totalBatchAmount, selectedAccount?.currency)})
