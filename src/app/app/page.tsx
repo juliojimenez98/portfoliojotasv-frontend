@@ -4,8 +4,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Mis Aplicaciones | Julio Jiménez",
-  description: "Ecosistema de aplicaciones personales y herramientas.",
+  title: "JotasVApp — Ecosistema de Aplicaciones",
+  description: "Bienvenido a JotasVApp. Tu plataforma centralizada de aplicaciones y herramientas personales.",
 };
 
 interface AppCardConfig {
@@ -87,35 +87,45 @@ export default async function AppHubPage() {
 
   return (
     <div className="space-y-8 animate-fade-in max-w-6xl mx-auto py-2">
-      {/* ── HERO BANNER ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-background-elevated to-secondary/10 border border-border/80 p-6 md:p-10 shadow-lg backdrop-blur-xs">
+      {/* ── HERO BANNER: BIENVENIDA A JOTASVAPP ── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/15 via-background-elevated to-secondary/15 border border-primary/20 p-6 md:p-10 shadow-xl backdrop-blur-xs">
         {/* Background ambient blurs */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-secondary/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-80 h-80 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-secondary/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">👋</span>
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                Ecosistema Personal
-              </span>
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary-light text-xs font-bold uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span>Plataforma JotasVApp</span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-              ¡Hola, <span className="gradient-text">{displayName}</span>!
+            
+            <h1 className="text-3xl sm:text-5xl font-black text-foreground tracking-tight">
+              Bienvenido a <span className="gradient-text">JotasVApp</span>
             </h1>
-            <p className="text-sm md:text-base text-foreground-muted max-w-xl">
-              Bienvenido a tu panel de aplicaciones. Selecciona la herramienta a la que deseas acceder para comenzar.
+            
+            <p className="text-sm md:text-base text-foreground-muted max-w-xl leading-relaxed">
+              Hola, <b className="text-foreground">{displayName}</b>. Tu ecosistema privado de herramientas, gestión financiera y automatización.
             </p>
+
+            <div className="pt-2 flex items-center gap-3">
+              <Link
+                href="/me"
+                className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl bg-background/80 border border-border text-foreground-muted hover:text-foreground hover:bg-background-elevated transition-colors"
+              >
+                <span>👤</span>
+                <span>Sobre Mí / Portafolio</span>
+              </Link>
+            </div>
           </div>
 
           {/* User profile capsule */}
-          <div className="flex items-center gap-3.5 bg-background/80 dark:bg-black/30 border border-border/60 p-3 rounded-2xl backdrop-blur-md self-start md:self-auto">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-secondary text-white font-bold flex items-center justify-center text-base shadow-md">
+          <div className="flex items-center gap-3.5 bg-background/80 dark:bg-black/40 border border-border/80 p-3.5 rounded-2xl backdrop-blur-md self-start md:self-auto shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary text-white font-bold flex items-center justify-center text-lg shadow-md">
               {displayName.charAt(0).toUpperCase()}
             </div>
             <div className="text-xs">
-              <div className="font-semibold text-foreground flex items-center gap-1.5">
+              <div className="font-bold text-foreground flex items-center gap-1.5 text-sm">
                 <span>{displayName}</span>
                 {isAdmin && (
                   <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold">
@@ -123,7 +133,7 @@ export default async function AppHubPage() {
                   </span>
                 )}
               </div>
-              <p className="text-foreground-subtle text-[11px] truncate max-w-[160px]">
+              <p className="text-foreground-subtle text-xs truncate max-w-[170px] mt-0.5">
                 {email}
               </p>
             </div>
@@ -135,12 +145,12 @@ export default async function AppHubPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <span>🚀</span> Tus Aplicaciones Disponibles
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <span>🚀</span> Mis Aplicaciones
             </h2>
-            <p className="text-xs text-foreground-muted">
-              Tienes acceso a {accessibleApps.length}{" "}
-              {accessibleApps.length === 1 ? "aplicación" : "aplicaciones"}.
+            <p className="text-xs text-foreground-muted mt-0.5">
+              Acceso a {accessibleApps.length}{" "}
+              {accessibleApps.length === 1 ? "módulo activo" : "módulos activos"}.
             </p>
           </div>
         </div>
@@ -156,18 +166,18 @@ export default async function AppHubPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {accessibleApps.map((app) => (
               <div
                 key={app.id}
-                className={`group relative overflow-hidden rounded-3xl bg-background-card border border-border transition-all duration-300 flex flex-col justify-between hover:shadow-xl ${app.borderHover}`}
+                className={`group relative overflow-hidden rounded-3xl bg-background-card border border-border transition-all duration-300 flex flex-col justify-between hover:shadow-2xl ${app.borderHover}`}
               >
                 {/* Gradient background hover effect */}
                 <div
                   className={`absolute inset-0 bg-gradient-to-b ${app.gradient} opacity-40 group-hover:opacity-100 transition-opacity duration-500`}
                 />
 
-                <div className="relative z-10 p-6 space-y-5">
+                <div className="relative z-10 p-6 md:p-8 space-y-5">
                   {/* Top card bar: Icon + Category Badge */}
                   <div className="flex items-start justify-between gap-3">
                     <div
@@ -184,20 +194,20 @@ export default async function AppHubPage() {
 
                   {/* App Info */}
                   <div>
-                    <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                    <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
                       {app.name}
                     </h3>
-                    <p className="text-xs text-foreground-muted mt-2 leading-relaxed line-clamp-3">
+                    <p className="text-xs sm:text-sm text-foreground-muted mt-2 leading-relaxed">
                       {app.description}
                     </p>
                   </div>
 
                   {/* Feature Highlights */}
-                  <div className="space-y-1.5 pt-2 border-t border-border/50">
+                  <div className="space-y-1.5 pt-3 border-t border-border/50">
                     <p className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wider">
-                      Incluye:
+                      Módulos incluidos:
                     </p>
-                    <ul className="space-y-1 text-xs text-foreground-muted">
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-foreground-muted">
                       {app.features.map((feat, idx) => (
                         <li key={idx} className="flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0" />
@@ -212,7 +222,7 @@ export default async function AppHubPage() {
                     {app.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 text-foreground-subtle text-[11px]"
+                        className="px-2.5 py-1 rounded-md bg-black/5 dark:bg-white/5 text-foreground-subtle text-[11px] font-medium"
                       >
                         #{tag}
                       </span>
@@ -221,10 +231,10 @@ export default async function AppHubPage() {
                 </div>
 
                 {/* Card Action Button Footer */}
-                <div className="relative z-10 p-6 pt-0">
+                <div className="relative z-10 p-6 md:p-8 pt-0">
                   <Link
                     href={app.href}
-                    className={`w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm shadow-md transition-all duration-200 group-hover:gap-3 ${app.buttonClass}`}
+                    className={`w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-bold text-sm shadow-md transition-all duration-200 group-hover:gap-3 ${app.buttonClass}`}
                   >
                     <span>Ingresar a {app.name}</span>
                     <span className="text-base font-bold transition-transform group-hover:translate-x-1">
@@ -237,53 +247,53 @@ export default async function AppHubPage() {
 
             {/* ── ADMIN CARD (Only if isAdmin) ── */}
             {isAdmin && (
-              <div className="group relative overflow-hidden rounded-3xl bg-background-card border border-purple-500/30 hover:border-purple-500/60 transition-all duration-300 flex flex-col justify-between hover:shadow-xl hover:shadow-purple-500/10">
+              <div className="group relative overflow-hidden rounded-3xl bg-background-card border border-purple-500/30 hover:border-purple-500/60 transition-all duration-300 flex flex-col justify-between hover:shadow-2xl hover:shadow-purple-500/10 md:col-span-2">
                 <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 via-fuchsia-500/5 to-transparent opacity-40 group-hover:opacity-100 transition-opacity duration-500" />
 
-                <div className="relative z-10 p-6 space-y-5">
+                <div className="relative z-10 p-6 md:p-8 space-y-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center text-3xl shadow-lg text-white group-hover:scale-105 transition-transform duration-300">
                       🛡️
                     </div>
                     <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-purple-500/10 text-purple-400 border-purple-500/20">
-                      Sistema
+                      Administración Global
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-bold text-foreground group-hover:text-purple-400 transition-colors">
+                    <h3 className="text-2xl font-bold text-foreground group-hover:text-purple-400 transition-colors">
                       Panel de Administración
                     </h3>
-                    <p className="text-xs text-foreground-muted mt-2 leading-relaxed">
-                      Gestión global de usuarios, asignación de permisos a aplicaciones, roles de seguridad y configuración del ecosistema.
+                    <p className="text-xs sm:text-sm text-foreground-muted mt-2 leading-relaxed">
+                      Gestión integral de usuarios, asignación de permisos a aplicaciones, roles de seguridad y configuración del ecosistema JotasVApp.
                     </p>
                   </div>
 
-                  <div className="space-y-1.5 pt-2 border-t border-border/50">
+                  <div className="space-y-1.5 pt-3 border-t border-border/50">
                     <p className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wider">
-                      Herramientas de Admin:
+                      Herramientas de Administrador:
                     </p>
-                    <ul className="space-y-1 text-xs text-foreground-muted">
+                    <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-foreground-muted">
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
-                        <span>Crear y administrar cuentas de usuarios</span>
+                        <span>Crear y gestionar usuarios</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
-                        <span>Habilitar y revocar acceso a apps</span>
+                        <span>Habilitar y revocar apps</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
-                        <span>Control de contraseñas y roles</span>
+                        <span>Roles y seguridad</span>
                       </li>
                     </ul>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5 pt-2">
-                    {["Usuarios", "Seguridad", "Permisos"].map((tag) => (
+                    {["Usuarios", "Seguridad", "Permisos", "JotasVApp"].map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 text-[11px]"
+                        className="px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-300 text-[11px] font-medium"
                       >
                         #{tag}
                       </span>
@@ -291,12 +301,12 @@ export default async function AppHubPage() {
                   </div>
                 </div>
 
-                <div className="relative z-10 p-6 pt-0">
+                <div className="relative z-10 p-6 md:p-8 pt-0">
                   <Link
                     href="/admin/users"
-                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition-all duration-200 group-hover:gap-3"
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-bold text-sm bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition-all duration-200 group-hover:gap-3"
                   >
-                    <span>Panel de Control</span>
+                    <span>Ingresar al Panel de Control</span>
                     <span className="text-base font-bold transition-transform group-hover:translate-x-1">
                       →
                     </span>

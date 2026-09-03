@@ -127,8 +127,8 @@ export default function AppSidebar() {
         {/* Footer Area */}
         <div className="shrink-0 border-t border-border/60 p-3 flex flex-col gap-2">
           <Link
-            href="/"
-            title={isCollapsed ? "Volver al Home" : undefined}
+            href="/me"
+            title={isCollapsed ? "Sobre Mí / Portafolio" : undefined}
             className={cn(
               "flex items-center rounded-xl font-medium transition-all duration-200 group",
               isCollapsed ? "justify-center p-3" : "gap-3 px-3 py-2",
@@ -138,14 +138,14 @@ export default function AppSidebar() {
             <span
               className={cn("shrink-0", isCollapsed ? "text-xl" : "text-lg")}
             >
-              🏠
+              👤
             </span>
             {!isCollapsed && (
-              <span className="whitespace-nowrap">Volver al Home</span>
+              <span className="whitespace-nowrap">Sobre Mí</span>
             )}
             {isCollapsed && (
               <span className="absolute left-full ml-4 px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
-                Volver al Home
+                Sobre Mí
               </span>
             )}
           </Link>
@@ -260,13 +260,13 @@ export default function AppSidebar() {
               </Link>
 
               <Link
-                href="/"
+                href="/me"
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center gap-4 p-4 rounded-2xl bg-background border border-border active:bg-background-elevated transition-colors"
               >
-                <span className="text-2xl">🏠</span>
+                <span className="text-2xl">👤</span>
                 <span className="text-sm font-semibold text-foreground">
-                  Volver al Home
+                  Sobre Mí / Portafolio
                 </span>
               </Link>
 
