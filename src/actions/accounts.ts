@@ -65,6 +65,7 @@ export async function depositToAccount(
   exchangeRate?: number,
   fromAccountId?: string,
   isExpense?: boolean,
+  date?: string | Date,
 ) {
   const body: any = { amount, description };
   if (internationalAmountUSD != null) {
@@ -76,6 +77,9 @@ export async function depositToAccount(
   }
   if (isExpense !== undefined) {
     body.isExpense = isExpense;
+  }
+  if (date) {
+    body.date = typeof date === "string" ? date : date.toISOString();
   }
   const res = await fetchWithAuth(`/api/accounts/${id}/deposit`, {
     method: "POST",

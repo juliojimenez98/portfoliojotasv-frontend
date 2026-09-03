@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
-import Input from "@/components/ui/Input";
+import Input, { Select } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { startPeriod } from "@/actions/periods";
 import { depositToAccount } from "@/actions/accounts";
@@ -21,6 +21,14 @@ interface PaydayReceiveModalProps {
   accounts?: IAccount[];
 }
 
+const getLocalDateString = (dateInput: Date | string | number = new Date()) => {
+  const d = new Date(dateInput);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export default function PaydayReceiveModal({
   isOpen,
   onClose,
@@ -38,19 +46,24 @@ export default function PaydayReceiveModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [newPeriod, setNewPeriod] = useState<ISpendPeriod | null>(null);
+
+  // Step 2: Deposit fields
+  const [depositAccountId, setDepositAccountId] = useState("");
+  const [depositDate, setDepositDate] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositLoading, setDepositLoading] = useState(false);
   const [depositError, setDepositError] = useState("");
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const todayStr = `${year}-${month}-${day}`; // YYYY-MM-DD (local timezone)
+  const todayStr = getLocalDateString(new Date());
 
-  const defaultLabel = (startDate ? new Date(startDate + "T12:00:00") : now)
-    .toLocaleDateString("es-CL", { month: "long", year: "numeric" })
-    .replace(/^\w/, (c) => c.toUpperCase());
+  const getLabelForDate = (dateStr: string) => {
+    const d = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
+    return d
+      .toLocaleDateString("es-CL", { month: "long", year: "numeric" })
+      .replace(/^\w/, (c) => c.toUpperCase());
+  };
+
+  const defaultLabel = getLabelForDate(startDate || todayStr);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,28 +71,60 @@ export default function PaydayReceiveModal({
       setLabel("");
       setNotes("");
       setStartDate(todayStr);
+      setDepositDate(todayStr);
       setError("");
       setNewPeriod(null);
       setDepositAmount(paydayConfig?.amount ? String(paydayConfig.amount) : "");
+      setDepositAccountId(
+        paydayConfig?.accountId || (accounts.length > 0 ? accounts[0]._id : ""),
+      );
       setDepositError("");
     }
-  }, [isOpen]);
+  }, [isOpen, paydayConfig, accounts, todayStr]);
+
+  // Sync depositDate with startDate if step 1 date changes
+  const handleStartDateChange = (val: string) => {
+    setStartDate(val);
+    setDepositDate(val);
+  };
+
+  // Quick Date Helpers
+  const setQuickDateToday = () => {
+    const d = getLocalDateString(new Date());
+    handleStartDateChange(d);
+  };
+
+  const setQuickDateYesterday = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    handleStartDateChange(getLocalDateString(d));
+  };
+
+  const setQuickDateLastMonthEnd = () => {
+    const now = new Date();
+    // Day 0 of current month = last day of previous month
+    const d = new Date(now.getFullYear(), now.getMonth(), 0);
+    handleStartDateChange(getLocalDateString(d));
+  };
 
   const handleConfirm = async () => {
     setLoading(true);
     setError("");
     try {
+      const chosenDate = startDate
+        ? new Date(startDate + "T00:00:00")
+        : new Date();
+
       const period = await startPeriod({
         label: label.trim() || defaultLabel,
-        startDate: startDate
-          ? new Date(startDate + "T00:00:00").toISOString()
-          : now.toISOString(),
+        startDate: chosenDate.toISOString(),
         notes: notes.trim() || undefined,
       });
       setNewPeriod(period);
       onPeriodStarted(period);
-      // If paydayConfig has an associated account, go to deposit step
-      if (paydayConfig?.accountId) {
+
+      // Transition to deposit step if accounts exist
+      if (accounts.length > 0) {
         setStep("deposit");
       } else {
         setStep("summary");
@@ -94,17 +139,30 @@ export default function PaydayReceiveModal({
   const handleDeposit = async () => {
     const amount = Number(depositAmount.replace(/\./g, "").replace(",", "."));
     if (!amount || amount <= 0) {
-      setDepositError("Ingresa un monto válido");
+      setDepositError("Ingresa un monto válido mayor a 0");
       return;
     }
-    if (!paydayConfig?.accountId) return;
+    if (!depositAccountId) {
+      setDepositError("Selecciona una cuenta de destino");
+      return;
+    }
+
     setDepositLoading(true);
     setDepositError("");
     try {
+      const finalDate = depositDate
+        ? new Date(depositDate + "T00:00:00").toISOString()
+        : new Date().toISOString();
+
       await depositToAccount(
-        paydayConfig.accountId,
+        depositAccountId,
         amount,
         `Sueldo${newPeriod?.label ? ` — ${newPeriod.label}` : ""}`,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        finalDate,
       );
       setStep("summary");
     } catch (err: any) {
@@ -114,99 +172,142 @@ export default function PaydayReceiveModal({
     }
   };
 
+  const accountOptions = accounts.map((a) => ({
+    value: a._id,
+    label: `${a.type === "credit_card" ? "💳" : "🏦"} ${a.name} (${formatCurrency(a.balance, a.currency)})`,
+  }));
+
+  const selectedDepositAccount = accounts.find((a) => a._id === depositAccountId);
+
   // ── Step 1: Confirmation ──────────────────────────────────────────────────
   if (step === "confirm") {
-    const snap = activePeriod?.snapshot;
+    const formattedSelectedDate = startDate
+      ? new Date(startDate + "T12:00:00").toLocaleDateString("es-CL", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : "";
+
     return (
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title="💰 Recibí mi Pago"
-        size="md"
+        title="💰 Recibí mi Sueldo / Iniciar Período"
+        size="lg"
       >
         <div className="space-y-5">
           {error && (
-            <div className="p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">
-              {error}
+            <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm font-medium">
+              ⚠️ {error}
             </div>
           )}
 
-          {/* Warning */}
-          <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 space-y-1">
+          {/* Warning Banner */}
+          <div className="p-4 rounded-2xl bg-warning/10 border border-warning/25 space-y-1">
             <p className="text-sm font-bold text-foreground flex items-center gap-2">
-              <span>⚠️</span> ¿Confirmas que recibiste tu pago?
+              <span>⚠️</span> ¿Confirmas que recibiste tu sueldo?
             </p>
             <p className="text-xs text-foreground-muted leading-relaxed">
-              Esto <strong>cerrará el período actual</strong> y abrirá uno
-              nuevo. Las transacciones <strong>no se eliminan</strong>, quedan
-              archivadas en el historial del período que se cierra.
+              Esto <strong>cerrará el período anterior</strong> y abrirá el nuevo
+              ciclo de gastos con las estadísticas actualizadas.
             </p>
           </div>
 
-          {/* Payday config warning */}
+          {/* Payday config hint */}
           {(!paydayConfig || !paydayConfig.accountId) && (
-            <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 space-y-2.5">
+            <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 space-y-1.5">
               <p className="text-xs font-bold text-primary flex items-center gap-1.5 uppercase tracking-wider">
-                <span>💡</span> Configuración de sueldo no encontrada
+                <span>💡</span> Configuración de sueldo
               </p>
               <p className="text-xs text-foreground-muted leading-relaxed">
-                No tienes configurada una cuenta destino para tu sueldo. Si lo configuras, el sistema te sugerirá abonar automáticamente tu sueldo al iniciar el período.
+                Puedes configurar tu día de pago habitual para que el sistema calcule los recordatorios automáticamente.
               </p>
-              <Link 
-                href="/app/gastos/configuracion" 
+              <Link
+                href="/app/gastos/configuracion"
                 onClick={onClose}
                 className="text-xs font-bold text-primary hover:underline block"
               >
-                ⚙️ Configurar Día de Pago ahora
+                ⚙️ Configurar Día de Pago habitual
               </Link>
             </div>
           )}
 
-          {/* Active period summary (if any) */}
+          {/* Active period closing info (if any) */}
           {activePeriod && (
-            <div className="p-4 rounded-2xl bg-background-elevated border border-border space-y-2">
-              <p className="text-xs font-bold text-foreground-muted uppercase tracking-wider">
+            <div className="p-4 rounded-2xl bg-background-elevated border border-border space-y-1.5">
+              <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-wider">
                 Período que se cerrará
               </p>
               <p className="text-sm font-semibold text-foreground">
-                {activePeriod.label}
+                📁 {activePeriod.label}
               </p>
               <p className="text-xs text-foreground-subtle">
-                Desde:{" "}
-                {new Date(activePeriod.startDate).toLocaleDateString("es-CL")} →
-                Hoy
+                Inició el:{" "}
+                {new Date(activePeriod.startDate).toLocaleDateString("es-CL", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
               </p>
             </div>
           )}
 
-          {/* New period label */}
-          <div className="space-y-3">
-            <p className="text-xs font-bold text-foreground-muted uppercase tracking-wider">
-              Nuevo período
-            </p>
-            <div>
-              <label className="text-xs font-medium text-foreground-muted block mb-1.5">
-                ¿Cuándo recibiste el pago?
+          {/* Date Picker Section */}
+          <div className="p-4 rounded-2xl bg-background-elevated border border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                <span>📅</span> ¿Cuándo recibiste tu sueldo? *
               </label>
-              <input
-                type="date"
-                value={startDate}
-                max={todayStr}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-              />
-              {startDate !== todayStr && (
-                <p className="text-xs text-primary mt-1">
-                  El período iniciará desde el{" "}
-                  {new Date(startDate + "T12:00:00").toLocaleDateString(
-                    "es-CL",
-                    { day: "2-digit", month: "long", year: "numeric" },
-                  )}
-                </p>
-              )}
             </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={setQuickDateToday}
+                className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
+                  startDate === todayStr
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-background border border-border text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                Hoy
+              </button>
+              <button
+                type="button"
+                onClick={setQuickDateYesterday}
+                className="px-3 py-1 rounded-xl text-xs font-semibold bg-background border border-border text-foreground-muted hover:text-foreground transition-all"
+              >
+                Ayer
+              </button>
+              <button
+                type="button"
+                onClick={setQuickDateLastMonthEnd}
+                className="px-3 py-1 rounded-xl text-xs font-semibold bg-background border border-border text-foreground-muted hover:text-foreground transition-all"
+              >
+                Fin de mes anterior
+              </button>
+            </div>
+
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm font-medium rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+            />
+
+            {formattedSelectedDate && (
+              <p className="text-xs text-primary font-medium capitalize">
+                ✨ {formattedSelectedDate}
+              </p>
+            )}
+          </div>
+
+          {/* New period details */}
+          <div className="space-y-3">
             <Input
-              label="Nombre del período (opcional)"
+              label="Nombre del período"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder={defaultLabel}
@@ -215,16 +316,16 @@ export default function PaydayReceiveModal({
               label="Notas (opcional)"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej: Sueldo + bono de mayo"
+              placeholder="Ej: Sueldo + bono de desempeño"
             />
           </div>
 
-          <div className="flex gap-3 pt-1">
+          <div className="flex gap-3 pt-2">
             <Button
               type="button"
               variant="secondary"
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 py-2.5"
             >
               Cancelar
             </Button>
@@ -232,9 +333,9 @@ export default function PaydayReceiveModal({
               type="button"
               isLoading={loading}
               onClick={handleConfirm}
-              className="flex-1"
+              className="flex-1 py-2.5 font-bold shadow-lg shadow-primary/25"
             >
-              💰 Confirmar Pago Recibido
+              💰 Confirmar Sueldo Recibido
             </Button>
           </div>
         </div>
@@ -244,54 +345,69 @@ export default function PaydayReceiveModal({
 
   // ── Step 2: Deposit salary ────────────────────────────────────────────────
   if (step === "deposit") {
-    const depositAccount = accounts.find(
-      (a) => a._id === paydayConfig?.accountId,
-    );
     return (
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title="💵 Abonar Sueldo"
-        size="md"
+        title="💵 Abonar Sueldo a tu Cuenta"
+        size="lg"
       >
         <div className="space-y-5">
           {depositError && (
-            <div className="p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">
-              {depositError}
+            <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-sm font-medium">
+              ⚠️ {depositError}
             </div>
           )}
 
           <div className="p-4 rounded-2xl bg-success/10 border border-success/20 space-y-1">
-            <p className="text-sm font-bold text-foreground flex items-center gap-2">
-              <span>🎉</span> ¡Período iniciado correctamente!
+            <p className="text-sm font-bold text-success flex items-center gap-2">
+              <span>🎉</span> ¡Período iniciado con éxito!
             </p>
             <p className="text-xs text-foreground-muted leading-relaxed">
-              Nuevo período <strong>{newPeriod?.label}</strong> activo. Ahora
-              puedes abonar tu sueldo para dejar los gastos en $0 de partida.
+              Período <strong>{newPeriod?.label}</strong> activo. Puedes ingresar
+              el depósito de tu sueldo a continuación o presionar omitir.
             </p>
           </div>
 
-          {depositAccount && (
-            <div className="p-4 rounded-2xl bg-background-elevated border border-border space-y-1">
-              <p className="text-xs font-bold text-foreground-muted uppercase tracking-wider">
-                Cuenta destino
-              </p>
-              <p className="text-sm font-semibold text-foreground">
-                🏦 {depositAccount.name}
-              </p>
-              <p className="text-xs text-foreground-subtle">
-                Saldo actual:{" "}
-                {formatCurrency(
-                  depositAccount.balance,
-                  depositAccount.currency,
-                )}
-              </p>
-            </div>
-          )}
+          {/* Account Selection */}
+          <div className="space-y-3">
+            <Select
+              label="Cuenta destino del sueldo *"
+              value={depositAccountId}
+              onChange={(e) => setDepositAccountId(e.target.value)}
+              options={accountOptions}
+            />
 
+            {selectedDepositAccount && (
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-background-elevated border border-border text-xs">
+                <span className="text-foreground-muted font-medium">Saldo actual de la cuenta:</span>
+                <strong className="text-foreground text-sm font-bold">
+                  {formatCurrency(
+                    selectedDepositAccount.balance,
+                    selectedDepositAccount.currency,
+                  )}
+                </strong>
+              </div>
+            )}
+          </div>
+
+          {/* Deposit Date */}
           <div>
-            <label className="text-xs font-medium text-foreground-muted block mb-1.5">
-              Monto a abonar
+            <label className="text-xs font-bold text-foreground block mb-1.5 uppercase tracking-wider">
+              📅 Fecha del abono / depósito *
+            </label>
+            <input
+              type="date"
+              value={depositDate}
+              onChange={(e) => setDepositDate(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm font-medium rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+            />
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label className="text-xs font-bold text-foreground block mb-1.5 uppercase tracking-wider">
+              Monto del sueldo *
               {paydayConfig?.currency && paydayConfig.currency !== "CLP" && (
                 <span className="ml-1 text-primary">
                   ({paydayConfig.currency})
@@ -305,31 +421,31 @@ export default function PaydayReceiveModal({
               placeholder={
                 paydayConfig?.amount ? String(paydayConfig.amount) : "0"
               }
-              className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+              className="w-full px-3.5 py-2.5 text-sm font-bold rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-mono"
               min="1"
             />
             {paydayConfig?.amount && (
-              <p className="text-xs text-foreground-subtle mt-1">
-                Monto configurado:{" "}
-                {formatCurrency(paydayConfig.amount, paydayConfig.currency)}
+              <p className="text-xs text-foreground-subtle mt-1.5">
+                Monto configurado habitualmente:{" "}
+                <strong>{formatCurrency(paydayConfig.amount, paydayConfig.currency)}</strong>
               </p>
             )}
           </div>
 
-          <div className="flex gap-3 pt-1">
+          <div className="flex gap-3 pt-2">
             <Button
               type="button"
               variant="secondary"
               onClick={() => setStep("summary")}
-              className="flex-1"
+              className="flex-1 py-2.5"
             >
-              Omitir
+              Omitir Abono
             </Button>
             <Button
               type="button"
               isLoading={depositLoading}
               onClick={handleDeposit}
-              className="flex-1"
+              className="flex-1 py-2.5 font-bold shadow-lg shadow-primary/25"
             >
               💵 Abonar Sueldo
             </Button>
@@ -344,23 +460,23 @@ export default function PaydayReceiveModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="✅ ¡Período Cerrado!"
+      title="✅ ¡Período Iniciado!"
       size="md"
     >
-      <div className="space-y-5">
-        <div className="p-4 rounded-2xl bg-success/10 border border-success/20 text-center space-y-1">
-          <p className="text-3xl">🎉</p>
+      <div className="space-y-5 py-2">
+        <div className="p-5 rounded-2xl bg-success/10 border border-success/20 text-center space-y-2">
+          <p className="text-4xl">🎉</p>
           <p className="text-base font-bold text-success">
-            ¡Nuevo período iniciado!
+            ¡Período registrado correctamente!
           </p>
           <p className="text-sm text-foreground-muted">
-            Ya puedes empezar a registrar los gastos de{" "}
-            <strong>{newPeriod?.label}</strong>
+            Ya puedes registrar tus gastos correspondientes a{" "}
+            <strong className="text-foreground">{newPeriod?.label}</strong>.
           </p>
         </div>
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" onClick={onClose} className="flex-1">
+          <Button type="button" onClick={onClose} className="w-full font-bold py-2.5">
             Entendido
           </Button>
         </div>
