@@ -12,7 +12,7 @@ import { checkBackendHealth } from '@/actions/health';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/app/gastos';
+  const callbackUrl = searchParams.get('callbackUrl') || '/app';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

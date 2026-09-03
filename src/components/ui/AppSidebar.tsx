@@ -7,7 +7,12 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 
+const hubNavItems = [
+  { href: "/app", label: "Mis Aplicaciones", icon: "🗂️" },
+];
+
 const gastosNavItems = [
+  { href: "/app", label: "Mis Apps", icon: "🗂️" },
   { href: "/app/gastos", label: "Resumen", icon: "📊" },
   { href: "/app/gastos/transacciones", label: "Transacciones", icon: "💸" },
   { href: "/app/gastos/cuentas", label: "Cuentas", icon: "🏦" },
@@ -17,6 +22,7 @@ const gastosNavItems = [
 ];
 
 const remediosNavItems = [
+  { href: "/app", label: "Mis Apps", icon: "🗂️" },
   { href: "/app/remedios", label: "Remedios", icon: "💊" },
 ];
 
@@ -25,11 +31,14 @@ export default function AppSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
+  const isHub = pathname === "/app";
   const isRemedios = pathname.startsWith("/app/remedios");
-  const navItems = isRemedios ? remediosNavItems : gastosNavItems;
-  const mobileNavItems = isRemedios
-    ? remediosNavItems
-    : gastosNavItems.filter((item) => item.href !== "/app/gastos/configuracion");
+  const navItems = isHub ? hubNavItems : isRemedios ? remediosNavItems : gastosNavItems;
+  const mobileNavItems = isHub
+    ? hubNavItems
+    : isRemedios
+      ? remediosNavItems
+      : gastosNavItems.filter((item) => item.href !== "/app/gastos/configuracion");
 
   return (
     <>
@@ -73,7 +82,7 @@ export default function AppSidebar() {
           <div className="flex flex-col gap-1 px-3">
             {!isCollapsed && (
               <p className="text-xs font-bold text-foreground-muted uppercase tracking-wider mb-2 px-3">
-                {isRemedios ? "Medicamentos" : "Finanzas"}
+                {isHub ? "Plataforma" : isRemedios ? "Medicamentos" : "Finanzas"}
               </p>
             )}
             <nav className="flex flex-col gap-1.5">
@@ -239,6 +248,17 @@ export default function AppSidebar() {
             </h3>
 
             <div className="flex flex-col gap-2">
+              <Link
+                href="/app"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-4 p-4 rounded-2xl bg-background border border-border active:bg-background-elevated transition-colors"
+              >
+                <span className="text-2xl">🗂️</span>
+                <span className="text-sm font-semibold text-foreground">
+                  Mis Aplicaciones
+                </span>
+              </Link>
+
               <Link
                 href="/"
                 onClick={() => setShowMobileMenu(false)}
