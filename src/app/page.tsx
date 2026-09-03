@@ -229,13 +229,37 @@ export default function HomePage() {
               </div>
             </Link>
 
-            {/* Placeholder: Próximo proyecto */}
-            <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/50 flex items-center justify-center min-h-[220px]">
-              <div className="text-center p-6">
-                <div className="text-4xl mb-3 opacity-30">🔮</div>
-                <p className="text-sm text-foreground-subtle">Próximo proyecto...</p>
+            {/* Proyecto: App de Remedios */}
+            <Link
+              href="/app/remedios"
+              className="group relative overflow-hidden rounded-2xl bg-background-card border border-border hover:border-primary/30 transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center text-white text-lg">
+                    💊
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Recordatorio de Remedios</h3>
+                    <p className="text-xs text-foreground-subtle">Notificaciones e interacción por Telegram</p>
+                  </div>
+                </div>
+                <p className="text-sm text-foreground-muted leading-relaxed mb-4">
+                  App para controlar tus remedios y horarios. Recibe alertas en Telegram con botones interactivos para tomar, posponer o registrar omisiones con repetición automática.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['Next.js', 'Telegram Bot', 'TypeScript', 'MongoDB'].map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2.5 py-1 text-xs rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </section>

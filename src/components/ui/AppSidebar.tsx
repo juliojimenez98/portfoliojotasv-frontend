@@ -16,15 +16,20 @@ const gastosNavItems = [
   { href: "/app/gastos/configuracion", label: "Configuración", icon: "⚙️" },
 ];
 
+const remediosNavItems = [
+  { href: "/app/remedios", label: "Remedios", icon: "💊" },
+];
+
 export default function AppSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const navItems = gastosNavItems;
-  const mobileNavItems = gastosNavItems.filter(
-    (item) => item.href !== "/app/gastos/configuracion",
-  );
+  const isRemedios = pathname.startsWith("/app/remedios");
+  const navItems = isRemedios ? remediosNavItems : gastosNavItems;
+  const mobileNavItems = isRemedios
+    ? remediosNavItems
+    : gastosNavItems.filter((item) => item.href !== "/app/gastos/configuracion");
 
   return (
     <>
@@ -68,7 +73,7 @@ export default function AppSidebar() {
           <div className="flex flex-col gap-1 px-3">
             {!isCollapsed && (
               <p className="text-xs font-bold text-foreground-muted uppercase tracking-wider mb-2 px-3">
-                Finanzas
+                {isRemedios ? "Medicamentos" : "Finanzas"}
               </p>
             )}
             <nav className="flex flex-col gap-1.5">
@@ -112,7 +117,6 @@ export default function AppSidebar() {
 
         {/* Footer Area */}
         <div className="shrink-0 border-t border-border/60 p-3 flex flex-col gap-2">
-          {/* Cross-app navigation removed — polla is not in sidebar yet */}
           <Link
             href="/"
             title={isCollapsed ? "Volver al Home" : undefined}
