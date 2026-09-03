@@ -14,6 +14,7 @@ export default auth((req) => {
 
   // Public routes — skip protection
   if (
+    pathname === '/' ||
     pathname === '/me' ||
     pathname === '/login' ||
     pathname === '/register' ||
