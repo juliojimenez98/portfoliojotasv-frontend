@@ -100,10 +100,18 @@ export default function NewUserPage() {
               </label>
 
               <label className="flex items-center gap-3 p-4 rounded-xl border border-white/5 bg-background-light/50 cursor-pointer hover:bg-white/5 transition-colors">
-                <input type="checkbox" name="allowedApps" value="gastos" className="w-5 h-5 rounded border-white/10 bg-background text-emerald-500 focus:ring-emerald-500/50" />
+                <input type="checkbox" name="allowedApps" value="gastos" defaultChecked className="w-5 h-5 rounded border-white/10 bg-background text-emerald-500 focus:ring-emerald-500/50" />
                 <div>
                   <p className="font-medium text-foreground">App: Control de Gastos</p>
                   <p className="text-xs text-foreground-muted">Permite registrar y visualizar finanzas personales.</p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-4 rounded-xl border border-white/5 bg-background-light/50 cursor-pointer hover:bg-white/5 transition-colors">
+                <input type="checkbox" name="allowedApps" value="remedios" defaultChecked className="w-5 h-5 rounded border-white/10 bg-background text-sky-500 focus:ring-sky-500/50" />
+                <div>
+                  <p className="font-medium text-foreground">App: Recordatorio de Remedios</p>
+                  <p className="text-xs text-foreground-muted">Control de medicamentos y alertas por Telegram.</p>
                 </div>
               </label>
             </div>

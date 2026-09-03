@@ -67,26 +67,6 @@ const APPS: AppCardConfig[] = [
       "Sincronización en tiempo real con la web",
     ],
   },
-  {
-    id: "polla",
-    name: "Polla Futbolera",
-    description:
-      "Plataforma de pronósticos de fútbol, predicciones de resultados, tablas de posiciones en vivo y competencia en torneos con amigos.",
-    icon: "⚽",
-    category: "Deportes & Juegos",
-    href: "/app/polla",
-    gradient: "from-amber-500/10 via-orange-500/5 to-transparent",
-    accentBg: "bg-gradient-to-br from-amber-500 to-orange-600",
-    badgeBg: "bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/20",
-    borderHover: "hover:border-amber-500/50 hover:shadow-amber-500/10",
-    buttonClass: "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20",
-    tags: ["Fútbol", "Pronósticos", "Ranking", "Torneos"],
-    features: [
-      "Predicciones de partidos y fechas",
-      "Tabla de puntajes y ranking general",
-      "Grupos de amigos y torneos personalizados",
-    ],
-  },
 ];
 
 export default async function AppHubPage() {
