@@ -121,7 +121,19 @@ export default function AccountDetailModal({
 
                     return (
                       <tr key={txn._id} className="border-b border-border/50 hover:bg-white/2 transition-colors">
-                        <td className="py-2.5 px-3 text-foreground-muted whitespace-nowrap">{dateStr}</td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          <div className="flex flex-col">
+                            <span className="text-foreground font-medium text-xs">{dateStr}</span>
+                            {txn.createdAt && (
+                              <span
+                                className="text-[10px] text-foreground-subtle flex items-center gap-1"
+                                title={`Registrado en la app: ${new Date(txn.createdAt).toLocaleString("es-CL")}`}
+                              >
+                                <span className="opacity-70">🕒</span> {new Date(txn.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "2-digit" })} {new Date(txn.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-2.5 px-3 font-medium text-foreground">{txn.description}</td>
                         <td className="py-2.5 px-3 text-xs">
                           {isCC ? (

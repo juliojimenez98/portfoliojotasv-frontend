@@ -639,7 +639,7 @@ export default function TransactionFormModal({
             {/* Date & Notes */}
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Fecha *"
+                label="Fecha del movimiento *"
                 name="date"
                 type="date"
                 value={form.date}
@@ -653,6 +653,43 @@ export default function TransactionFormModal({
                 placeholder="Detalles..."
               />
             </div>
+
+            {/* Audit Information (when editing) */}
+            {editingTransaction && editingTransaction.createdAt && (
+              <div className="p-3.5 rounded-2xl bg-background-elevated/70 border border-border text-xs space-y-2 mt-2">
+                <p className="font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                  <span>🕒</span> Auditoría del Registro
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-foreground-muted text-[11px]">
+                  <div>
+                    <span className="text-foreground-subtle block">Registrado en la app:</span>
+                    <span className="font-semibold text-foreground">
+                      {new Date(editingTransaction.createdAt).toLocaleString("es-CL", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  {editingTransaction.updatedAt && (
+                    <div>
+                      <span className="text-foreground-subtle block">Última modificación:</span>
+                      <span className="font-semibold text-foreground">
+                        {new Date(editingTransaction.updatedAt).toLocaleString("es-CL", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -487,15 +487,37 @@ export default async function GastosDashboardPage({
                         <p className="text-sm font-medium text-foreground">
                           {txn.description}
                         </p>
-                        <p className="text-xs text-foreground-subtle capitalize">
-                          {catLabel}
+                        <p className="text-xs text-foreground-subtle capitalize flex items-center gap-1.5 flex-wrap">
+                          <span>{catLabel}</span>
+                          <span>·</span>
+                          <span className="text-foreground-muted">
+                            {new Date(txn.date).toLocaleDateString("es-CL", {
+                              day: "2-digit",
+                              month: "short",
+                            })}
+                          </span>
+                          {txn.createdAt && (
+                            <>
+                              <span>·</span>
+                              <span
+                                className="text-[10px] text-foreground-subtle/80"
+                                title={`Registrado en la app: ${new Date(txn.createdAt).toLocaleString("es-CL")}`}
+                              >
+                                🕒 {new Date(txn.createdAt).toLocaleDateString("es-CL", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                })} {new Date(txn.createdAt).toLocaleTimeString("es-CL", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </>
+                          )}
                           {txn.balanceBefore != null && (
                             <>
-                              {" "}
-                              ·{" "}
-                              <span className="font-mono">
-                                Saldo previo:{" "}
-                                {formatCurrency(txn.balanceBefore)}
+                              <span>·</span>
+                              <span className="font-mono text-[10px]">
+                                Prev: {formatCurrency(txn.balanceBefore)}
                               </span>
                             </>
                           )}

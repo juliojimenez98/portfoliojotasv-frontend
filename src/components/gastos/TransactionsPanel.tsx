@@ -36,7 +36,7 @@ export default function TransactionsPanel({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [periodFilter, setPeriodFilter] = useState<string>("all"); // 'all' | period._id
-  const [sortBy, setSortBy] = useState<"date" | "amount">("date");
+  const [sortBy, setSortBy] = useState<"date" | "createdAt" | "amount">("date");
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
 
   const filtered = useMemo(() => {
@@ -101,6 +101,10 @@ export default function TransactionsPanel({
       let cmp = 0;
       if (sortBy === "date") {
         cmp = new Date(a.date).getTime() - new Date(b.date).getTime();
+      } else if (sortBy === "createdAt") {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.date).getTime();
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.date).getTime();
+        cmp = timeA - timeB;
       } else {
         cmp = a.amount - b.amount;
       }
@@ -163,10 +167,23 @@ export default function TransactionsPanel({
   };
 
   const handleExportExcel = () => {
-    const headers = ["Descripción", "Categoría", "Cuenta", "Fecha", "Tipo", "Monto (CLP)", "Notas"];
+    const headers = [
+      "Descripción",
+      "Categoría",
+      "Cuenta",
+      "Fecha del Movimiento",
+      "Fecha de Registro (Auditoría)",
+      "Tipo",
+      "Monto (CLP)",
+      "Saldo Previo",
+      "Notas"
+    ];
     const rows = filtered.map((t) => {
       const cat = getCatDisplay(t.category, t);
       const dateStr = new Date(t.date).toLocaleDateString("es-CL");
+      const createdAtStr = t.createdAt
+        ? new Date(t.createdAt).toLocaleString("es-CL")
+        : "—";
       const isCCPayment = isCreditCardPayment(t);
       const typeStr = t.type === "income" ? "Ingreso" : isCCPayment ? "Gasto (Abono tarjeta)" : t.type === "transfer" ? "Transferencia" : "Gasto";
       return [
@@ -174,8 +191,10 @@ export default function TransactionsPanel({
         cat.label,
         getAccountName(t.accountId),
         dateStr,
+        createdAtStr,
         typeStr,
         t.amount,
+        t.balanceBefore != null ? t.balanceBefore : "",
         t.notes || ""
       ];
     });
@@ -439,8 +458,9 @@ export default function TransactionsPanel({
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="flex-1 px-3 py-2 text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
               >
-                <option value="date">Fecha</option>
-                <option value="amount">Monto</option>
+                <option value="date">📅 Fecha del Movimiento</option>
+                <option value="createdAt">🕒 Fecha de Registro (Auditoría)</option>
+                <option value="amount">💰 Monto</option>
               </select>
               <button
                 onClick={() => setSortDir(sortDir === "asc" ? "desc" : "asc")}
@@ -533,8 +553,18 @@ export default function TransactionsPanel({
                             <p className="font-medium text-foreground line-clamp-1">
                               {txn.description}
                             </p>
-                            <p className="text-xs text-foreground-subtle md:hidden">
-                              {cat.icon} {cat.label}
+                            <p className="text-xs text-foreground-subtle md:hidden flex items-center gap-1.5 flex-wrap mt-0.5">
+                              <span>{cat.icon} {cat.label}</span>
+                              <span>·</span>
+                              <span>{dateStr}</span>
+                              {txn.createdAt && (
+                                <span
+                                  className="text-[10px] text-foreground-subtle/80 bg-background-elevated px-1.5 py-0.5 rounded border border-border"
+                                  title={`Registrado: ${new Date(txn.createdAt).toLocaleString("es-CL")}`}
+                                >
+                                  🕒 Reg: {new Date(txn.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" })} {new Date(txn.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              )}
                             </p>
                           </div>
                         </div>
@@ -553,9 +583,28 @@ export default function TransactionsPanel({
                         </span>
                       </td>
                       <td className="py-3 px-3 hidden sm:table-cell">
-                        <span className="text-foreground-muted whitespace-nowrap">
-                          {dateStr}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-foreground font-medium whitespace-nowrap">
+                            {dateStr}
+                          </span>
+                          {txn.createdAt && (
+                            <span
+                              className="text-[10px] text-foreground-subtle whitespace-nowrap flex items-center gap-1 mt-0.5"
+                              title={`Registrado en la app: ${new Date(txn.createdAt).toLocaleString("es-CL")}`}
+                            >
+                              <span className="opacity-70">🕒 Reg:</span>{" "}
+                              {new Date(txn.createdAt).toLocaleDateString("es-CL", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              })}{" "}
+                              {new Date(txn.createdAt).toLocaleTimeString("es-CL", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-3 hidden xl:table-cell text-right">
                         {txn.balanceBefore != null ? (
