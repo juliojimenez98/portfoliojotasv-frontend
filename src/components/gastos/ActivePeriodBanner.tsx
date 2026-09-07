@@ -36,6 +36,16 @@ export default function ActivePeriodBanner({
       })
     : null;
 
+  const createdAtLabel = activePeriod?.createdAt
+    ? new Date(activePeriod.createdAt).toLocaleString("es-CL", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   return (
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-2xl bg-background-elevated border border-border">
@@ -51,12 +61,28 @@ export default function ActivePeriodBanner({
                   Período activo
                 </span>
               </div>
-              <p className="text-xs text-foreground-muted mt-0.5">
-                Desde {startLabel} ·{" "}
-                {daysSince === 0
-                  ? "Comenzó hoy"
-                  : `${daysSince} día${daysSince !== 1 ? "s" : ""}`}
-              </p>
+              <div className="text-xs text-foreground-muted mt-1 flex items-center gap-1.5 flex-wrap">
+                <span>
+                  Sueldo recibido: <strong className="text-foreground">{startLabel}</strong>
+                </span>
+                <span>·</span>
+                <span>
+                  {daysSince === 0
+                    ? "Comenzó hoy"
+                    : `${daysSince} día${daysSince !== 1 ? "s" : ""} transcurrido${daysSince !== 1 ? "s" : ""}`}
+                </span>
+                {createdAtLabel && (
+                  <>
+                    <span>·</span>
+                    <span
+                      className="text-[11px] text-foreground-subtle bg-background px-2 py-0.5 rounded-md border border-border inline-flex items-center gap-1"
+                      title={`Registrado en la app: ${createdAtLabel}`}
+                    >
+                      <span className="opacity-70">🕒 Reg:</span> {createdAtLabel}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
             <button
               type="button"

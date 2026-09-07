@@ -200,21 +200,37 @@ export default function ConfiguracionPage() {
                   Período Activo
                 </p>
                 {activePeriod ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <p className="text-base font-semibold text-foreground">
                       {activePeriod.label}
                     </p>
                     <p className="text-sm text-foreground-subtle">
-                      Desde:{" "}
-                      {new Date(activePeriod.startDate).toLocaleDateString(
-                        "es-CL",
-                        {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        },
-                      )}
+                      Fecha de sueldo:{" "}
+                      <strong className="text-foreground">
+                        {new Date(activePeriod.startDate).toLocaleDateString(
+                          "es-CL",
+                          {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          },
+                        )}
+                      </strong>
                     </p>
+                    {activePeriod.createdAt && (
+                      <p className="text-xs text-foreground-muted flex items-center gap-1">
+                        <span className="opacity-70">🕒 Registrado en la app:</span>{" "}
+                        <span className="font-semibold text-foreground">
+                          {new Date(activePeriod.createdAt).toLocaleString("es-CL", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </p>
+                    )}
                     {activePeriod.notes && (
                       <p className="text-sm text-foreground-muted italic mt-1">
                         {activePeriod.notes}
@@ -389,8 +405,25 @@ export default function ConfiguracionPage() {
                               {period.label}
                             </p>
                             <p className="text-xs text-foreground-subtle mt-0.5">
-                              {start} → {end}
+                              Sueldo: {start} → Cierre: {end}
                             </p>
+                            {period.createdAt && (
+                              <p
+                                className="text-[10px] text-foreground-subtle/80 mt-1 flex items-center gap-1"
+                                title={`Registrado en la app: ${new Date(period.createdAt).toLocaleString("es-CL")}`}
+                              >
+                                <span>🕒 Reg:</span>{" "}
+                                {new Date(period.createdAt).toLocaleDateString("es-CL", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })}{" "}
+                                {new Date(period.createdAt).toLocaleTimeString("es-CL", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            )}
                           </div>
                           <button
                             type="button"

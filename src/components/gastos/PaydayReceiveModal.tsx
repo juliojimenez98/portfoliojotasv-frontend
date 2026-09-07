@@ -243,14 +243,26 @@ export default function PaydayReceiveModal({
               <p className="text-sm font-semibold text-foreground">
                 📁 {activePeriod.label}
               </p>
-              <p className="text-xs text-foreground-subtle">
-                Inició el:{" "}
-                {new Date(activePeriod.startDate).toLocaleDateString("es-CL", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
+              <div className="text-xs text-foreground-subtle flex items-center gap-2 flex-wrap">
+                <span>
+                  Sueldo recibido:{" "}
+                  <strong className="text-foreground">
+                    {new Date(activePeriod.startDate).toLocaleDateString("es-CL", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </strong>
+                </span>
+                {activePeriod.createdAt && (
+                  <span
+                    className="text-[10px] text-foreground-subtle/80 bg-background px-1.5 py-0.5 rounded border border-border inline-flex items-center gap-1"
+                    title={`Registrado en la app: ${new Date(activePeriod.createdAt).toLocaleString("es-CL")}`}
+                  >
+                    <span>🕒 Reg:</span> {new Date(activePeriod.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -260,6 +272,9 @@ export default function PaydayReceiveModal({
               <label className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
                 <span>📅</span> ¿Cuándo recibiste tu sueldo? *
               </label>
+              <span className="text-[10px] text-foreground-subtle bg-background px-2 py-0.5 rounded-full border border-border">
+                🕒 Reg: Hoy
+              </span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

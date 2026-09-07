@@ -168,16 +168,32 @@ export default function SettingsPanel({
                       {activePeriod.label}
                     </p>
                     <p className="text-xs text-foreground-subtle">
-                      Desde:{" "}
-                      {new Date(activePeriod.startDate).toLocaleDateString(
-                        "es-CL",
-                        {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        },
-                      )}
+                      Fecha de sueldo:{" "}
+                      <strong className="text-foreground">
+                        {new Date(activePeriod.startDate).toLocaleDateString(
+                          "es-CL",
+                          {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          },
+                        )}
+                      </strong>
                     </p>
+                    {activePeriod.createdAt && (
+                      <p className="text-[11px] text-foreground-muted flex items-center gap-1">
+                        <span className="opacity-70">🕒 Registrado en la app:</span>{" "}
+                        <span className="font-semibold text-foreground">
+                          {new Date(activePeriod.createdAt).toLocaleString("es-CL", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </p>
+                    )}
                     {activePeriod.notes && (
                       <p className="text-xs text-foreground-muted italic">
                         {activePeriod.notes}
@@ -240,8 +256,25 @@ export default function SettingsPanel({
                               {period.label}
                             </p>
                             <p className="text-xs text-foreground-subtle mt-0.5">
-                              {start} → {end}
+                              Sueldo: {start} → Cierre: {end}
                             </p>
+                            {period.createdAt && (
+                              <p
+                                className="text-[10px] text-foreground-subtle/80 mt-0.5 flex items-center gap-1"
+                                title={`Registrado en la app: ${new Date(period.createdAt).toLocaleString("es-CL")}`}
+                              >
+                                <span>🕒 Reg:</span>{" "}
+                                {new Date(period.createdAt).toLocaleDateString("es-CL", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })}{" "}
+                                {new Date(period.createdAt).toLocaleTimeString("es-CL", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            )}
                           </div>
                           <button
                             type="button"
