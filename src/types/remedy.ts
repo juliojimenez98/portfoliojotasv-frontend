@@ -17,12 +17,14 @@ export interface IRemedy {
   nextDoseAt: string;
   snoozeMinutes: number;
   isActive: boolean;
+  pausedUntil?: string | null;
+  pauseReason?: string;
   reminderState?: ReminderState;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export type LogAction = "taken" | "skipped" | "snoozed";
+export type LogAction = "taken" | "skipped" | "snoozed" | "paused" | "resumed";
 
 export interface IRemedyLog {
   _id: string;

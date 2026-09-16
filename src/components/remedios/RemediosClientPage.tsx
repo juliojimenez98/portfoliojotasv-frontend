@@ -19,6 +19,8 @@ import {
   updateRemedy,
   deleteRemedy,
   executeRemedyAction,
+  pauseRemedy,
+  resumeRemedy,
   generateTelegramLinkCode,
   getTelegramStatus,
   linkTelegramManual,
@@ -55,6 +57,19 @@ export default function RemediosClientPage({
   const [manualChatId, setManualChatId] = useState("");
   const [isSubmittingManual, setIsSubmittingManual] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
+
+  // Pause modal state
+  const [pausingRemedy, setPausingRemedy] = useState<IRemedy | null>(null);
+  const [pauseDurationType, setPauseDurationType] = useState<
+    "indefinite" | "1d" | "2d" | "3d" | "7d" | "14d" | "30d" | "custom"
+  >("indefinite");
+  const [customPauseDate, setCustomPauseDate] = useState("");
+  const [pauseReasonText, setPauseReasonText] = useState("");
+  const [isSubmittingPause, setIsSubmittingPause] = useState(false);
+
+  // Resume modal state
+  const [resumingRemedy, setResumingRemedy] = useState<IRemedy | null>(null);
+  const [isSubmittingResume, setIsSubmittingResume] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -246,15 +261,119 @@ export default function RemediosClientPage({
     }
   };
 
-  // Toggle active status
-  const handleToggleActive = async (remedy: IRemedy) => {
+  // Open Pause Modal
+  const handleOpenPauseModal = (remedy: IRemedy) => {
+    setPausingRemedy(remedy);
+    setPauseDurationType("indefinite");
+    setPauseReasonText(remedy.pauseReason || "");
+
+    // Default custom date to tomorrow same hour/minute
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const dd = String(tomorrow.getDate()).padStart(2, "0");
+    const hh = String(tomorrow.getHours()).padStart(2, "0");
+    const min = String(tomorrow.getMinutes()).padStart(2, "0");
+    setCustomPauseDate(`${yyyy}-${mm}-${dd}T${hh}:${min}`);
+  };
+
+  // Confirm Pause
+  const handleConfirmPause = async () => {
+    if (!pausingRemedy) return;
+    setIsSubmittingPause(true);
+
     try {
-      const updated = await updateRemedy(remedy._id, {
-        isActive: !remedy.isActive,
+      let pausedUntil: string | null = null;
+      const now = new Date();
+
+      if (pauseDurationType === "1d") {
+        pausedUntil = new Date(now.getTime() + 24 * 3600 * 1000).toISOString();
+      } else if (pauseDurationType === "2d") {
+        pausedUntil = new Date(now.getTime() + 48 * 3600 * 1000).toISOString();
+      } else if (pauseDurationType === "3d") {
+        pausedUntil = new Date(now.getTime() + 72 * 3600 * 1000).toISOString();
+      } else if (pauseDurationType === "7d") {
+        pausedUntil = new Date(now.getTime() + 7 * 24 * 3600 * 1000).toISOString();
+      } else if (pauseDurationType === "14d") {
+        pausedUntil = new Date(now.getTime() + 14 * 24 * 3600 * 1000).toISOString();
+      } else if (pauseDurationType === "30d") {
+        pausedUntil = new Date(now.getTime() + 30 * 24 * 3600 * 1000).toISOString();
+      } else if (pauseDurationType === "custom") {
+        if (!customPauseDate) {
+          alert("Por favor selecciona una fecha y hora de término para la pausa.");
+          setIsSubmittingPause(false);
+          return;
+        }
+        const d = new Date(customPauseDate);
+        if (d <= now) {
+          alert("La fecha de término de la pausa debe ser en el futuro.");
+          setIsSubmittingPause(false);
+          return;
+        }
+        pausedUntil = d.toISOString();
+      }
+
+      const res = await pauseRemedy(pausingRemedy._id, {
+        pausedUntil,
+        reason: pauseReasonText.trim() || undefined,
       });
-      setRemedies((prev) => prev.map((r) => (r._id === remedy._id ? updated : r)));
+
+      setRemedies((prev) =>
+        prev.map((r) => (r._id === pausingRemedy._id ? res.remedy : r)),
+      );
+
+      // Append log locally
+      setLogs((prev) => [
+        {
+          _id: String(Date.now()),
+          userId: pausingRemedy.userId,
+          remedyId: pausingRemedy._id,
+          remedyName: pausingRemedy.name,
+          scheduledFor: pausingRemedy.nextDoseAt,
+          action: "paused",
+          actionAt: new Date().toISOString(),
+          skipReason: res.remedy.pauseReason,
+        },
+        ...prev,
+      ]);
+
+      setPausingRemedy(null);
     } catch (err: any) {
-      alert(err.message || "Error al actualizar estado");
+      alert(err.message || "Error al pausar la medicación");
+    } finally {
+      setIsSubmittingPause(false);
+    }
+  };
+
+  // Confirm Resume
+  const handleConfirmResume = async (remedy: IRemedy) => {
+    setIsSubmittingResume(true);
+    try {
+      const res = await resumeRemedy(remedy._id);
+      setRemedies((prev) =>
+        prev.map((r) => (r._id === remedy._id ? res.remedy : r)),
+      );
+
+      // Append log locally
+      setLogs((prev) => [
+        {
+          _id: String(Date.now()),
+          userId: remedy.userId,
+          remedyId: remedy._id,
+          remedyName: remedy.name,
+          scheduledFor: res.remedy.nextDoseAt,
+          action: "resumed",
+          actionAt: new Date().toISOString(),
+          skipReason: "Medicación reanudada",
+        },
+        ...prev,
+      ]);
+      setResumingRemedy(null);
+    } catch (err: any) {
+      alert(err.message || "Error al reanudar la medicación");
+    } finally {
+      setIsSubmittingResume(false);
     }
   };
 
@@ -644,7 +763,7 @@ export default function RemediosClientPage({
                     key={remedy._id}
                     className={`group relative p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-4 ${
                       !remedy.isActive
-                        ? "bg-background-elevated/40 border-border opacity-60"
+                        ? "bg-warning/5 border-warning/30 shadow-xs"
                         : isDue
                           ? "bg-primary/5 border-primary/40 shadow-lg shadow-primary/5"
                           : isSnoozed
@@ -682,8 +801,12 @@ export default function RemediosClientPage({
                                 Programado ⏳
                               </Badge>
                             )
+                          ) : remedy.pausedUntil ? (
+                            <Badge variant="warning" dot>
+                              Pausado Temporal
+                            </Badge>
                           ) : (
-                            <Badge variant="default">Pausado</Badge>
+                            <Badge variant="default">Pausado Indefinido</Badge>
                           )}
                         </div>
                       </div>
@@ -711,22 +834,50 @@ export default function RemediosClientPage({
                         </div>
                       </div>
 
-                      {/* Next dose indicator */}
-                      <div className="mt-3 text-xs flex items-center justify-between">
-                        <span className="text-foreground-muted font-medium">
-                          Próxima dosis:
-                        </span>
-                        <span
-                          suppressHydrationWarning
-                          className={`font-semibold ${
-                            isDue
-                              ? "text-primary animate-pulse"
-                              : "text-foreground-muted"
-                          }`}
-                        >
-                          {formatDateTime(remedy.nextDoseAt)}
-                        </span>
-                      </div>
+                      {/* Paused state info box */}
+                      {!remedy.isActive ? (
+                        <div className="p-3 rounded-xl bg-warning/10 border border-warning/20 text-xs space-y-1.5 my-3">
+                          <div className="flex items-center gap-1.5 font-bold text-warning">
+                            <span>⏸️</span>
+                            <span suppressHydrationWarning>
+                              {remedy.pausedUntil
+                                ? `Pausado hasta: ${formatDateTime(remedy.pausedUntil)}`
+                                : "Pausado indefinidamente"}
+                            </span>
+                          </div>
+                          {remedy.pauseReason && (
+                            <p className="text-foreground-muted text-[11px] italic">
+                              Motivo: "{remedy.pauseReason}"
+                            </p>
+                          )}
+                          {remedy.pausedUntil ? (
+                            <p className="text-[11px] text-foreground-subtle">
+                              🔔 Los recordatorios se reactivarán automáticamente al cumplirse el plazo.
+                            </p>
+                          ) : (
+                            <p className="text-[11px] text-foreground-subtle">
+                              Permanecerá pausado hasta que lo reactives manualmente.
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        /* Next dose indicator when active */
+                        <div className="mt-3 text-xs flex items-center justify-between">
+                          <span className="text-foreground-muted font-medium">
+                            Próxima dosis:
+                          </span>
+                          <span
+                            suppressHydrationWarning
+                            className={`font-semibold ${
+                              isDue
+                                ? "text-primary animate-pulse"
+                                : "text-foreground-muted"
+                            }`}
+                          >
+                            {formatDateTime(remedy.nextDoseAt)}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Last recorded log */}
                       {lastLog && (
@@ -736,6 +887,8 @@ export default function RemediosClientPage({
                             {lastLog.action === "taken" && "✅ Tomado "}
                             {lastLog.action === "snoozed" && "⏰ Pospuesto "}
                             {lastLog.action === "skipped" && "❌ Omitido "}
+                            {lastLog.action === "paused" && "⏸️ Pausado "}
+                            {lastLog.action === "resumed" && "▶️ Reanudado "}
                             <span suppressHydrationWarning className="font-normal text-foreground-muted">
                               ({formatDateTime(lastLog.actionAt)})
                             </span>
@@ -746,7 +899,7 @@ export default function RemediosClientPage({
 
                     {/* Action buttons */}
                     <div className="space-y-2 pt-2 border-t border-border/50">
-                      {remedy.isActive && (
+                      {remedy.isActive ? (
                         <div className="grid grid-cols-3 gap-1.5">
                           <button
                             onClick={() => handleActionTaken(remedy)}
@@ -779,15 +932,33 @@ export default function RemediosClientPage({
                             ❌ Omitir
                           </button>
                         </div>
+                      ) : (
+                        <button
+                          onClick={() => setResumingRemedy(remedy)}
+                          className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-98"
+                        >
+                          <span>▶️ Reanudar Medicación</span>
+                        </button>
                       )}
 
                       <div className="flex items-center justify-between text-xs pt-1">
-                        <button
-                          onClick={() => handleToggleActive(remedy)}
-                          className="text-foreground-subtle hover:text-foreground transition-colors"
-                        >
-                          {remedy.isActive ? "⏸️ Pausar" : "▶️ Reanudar"}
-                        </button>
+                        {remedy.isActive ? (
+                          <button
+                            onClick={() => handleOpenPauseModal(remedy)}
+                            className="text-amber-500 hover:text-amber-600 dark:text-amber-400 font-semibold transition-colors flex items-center gap-1"
+                            title="Pausar medicación por un período o indefinidamente"
+                          >
+                            <span>⏸️ Pausar</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleOpenPauseModal(remedy)}
+                            className="text-foreground-subtle hover:text-foreground transition-colors font-medium flex items-center gap-1"
+                            title="Cambiar duración o motivo de la pausa"
+                          >
+                            <span>⚙️ Ajustar Pausa</span>
+                          </button>
+                        )}
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => handleOpenEditModal(remedy)}
@@ -855,6 +1026,12 @@ export default function RemediosClientPage({
                           )}
                           {log.action === "skipped" && (
                             <Badge variant="danger">❌ Omitido</Badge>
+                          )}
+                          {log.action === "paused" && (
+                            <Badge variant="warning">⏸️ Pausado</Badge>
+                          )}
+                          {log.action === "resumed" && (
+                            <Badge variant="primary">▶️ Reanudado</Badge>
                           )}
                         </td>
                         <td className="py-3 px-2 text-foreground-muted">
@@ -1078,6 +1255,160 @@ export default function RemediosClientPage({
                 className="bg-danger hover:bg-danger/90 text-white"
               >
                 ❌ Registrar Omisión
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── MODAL: PAUSAR MEDICACIÓN ── */}
+      {pausingRemedy && (
+        <Modal
+          isOpen={Boolean(pausingRemedy)}
+          onClose={() => setPausingRemedy(null)}
+          title={`Pausar Medicación: ${pausingRemedy.name}`}
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-foreground-muted">
+              Selecciona el período durante el cual deseas suspender los recordatorios de este medicamento:
+            </p>
+
+            {/* Durations Grid */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider block">
+                Duración de la pausa:
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "indefinite", label: "⏸️ Indefinida (Manual)" },
+                  { id: "1d", label: "⏳ 1 día (24h)" },
+                  { id: "2d", label: "⏳ 2 días" },
+                  { id: "3d", label: "⏳ 3 días" },
+                  { id: "7d", label: "⏳ 1 semana" },
+                  { id: "14d", label: "⏳ 2 semanas" },
+                  { id: "30d", label: "⏳ 1 mes" },
+                  { id: "custom", label: "📅 Fecha exacta..." },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setPauseDurationType(item.id as any)}
+                    className={`p-3 rounded-xl text-xs font-medium border text-left transition-all ${
+                      pauseDurationType === item.id
+                        ? "bg-amber-500/10 border-amber-500/40 text-amber-500 dark:text-amber-400 font-semibold shadow-xs"
+                        : "bg-background border-border text-foreground hover:border-border-hover"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Date Input */}
+            {pauseDurationType === "custom" && (
+              <div className="p-3.5 rounded-xl bg-background border border-amber-500/30 space-y-1.5 animate-fade-in">
+                <label className="text-xs font-medium text-foreground block">
+                  Pausar hasta fecha y hora específica:
+                </label>
+                <input
+                  type="datetime-local"
+                  value={customPauseDate}
+                  onChange={(e) => setCustomPauseDate(e.target.value)}
+                  className="w-full bg-background-light border border-border rounded-xl py-2 px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                />
+              </div>
+            )}
+
+            {/* Reason / Notes */}
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <label className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider block">
+                Motivo de la pausa (opcional):
+              </label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {[
+                  "Vacaciones",
+                  "Indicación médica",
+                  "Exámenes / Ayuno",
+                  "Descanso temporal",
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setPauseReasonText(chip)}
+                    className={`px-2.5 py-1 rounded-lg text-xs transition-colors ${
+                      pauseReasonText === chip
+                        ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                        : "bg-black/5 dark:bg-white/5 text-foreground-muted hover:text-foreground"
+                    }`}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+              <Input
+                placeholder="Escribe el motivo o notas de la pausa..."
+                value={pauseReasonText}
+                onChange={(e) => setPauseReasonText(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3">
+              <Button
+                variant="outline"
+                onClick={() => setPausingRemedy(null)}
+                disabled={isSubmittingPause}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmPause}
+                disabled={isSubmittingPause}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs"
+              >
+                {isSubmittingPause ? "Guardando..." : "Confirmar Pausa ⏸️"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── MODAL: REANUDAR MEDICACIÓN ── */}
+      {resumingRemedy && (
+        <Modal
+          isOpen={Boolean(resumingRemedy)}
+          onClose={() => setResumingRemedy(null)}
+          title={`Reanudar Medicación: ${resumingRemedy.name}`}
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-foreground-muted">
+              ¿Deseas reactivar los recordatorios para <b>{resumingRemedy.name}</b> (dosis: <code>{resumingRemedy.dose}</code>)?
+            </p>
+
+            <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-foreground space-y-1">
+              <p className="font-semibold text-primary">
+                ℹ️ ¿Qué sucederá al reactivar?
+              </p>
+              <ul className="list-disc list-inside space-y-0.5 text-foreground-muted">
+                <li>Volverás a recibir las alertas en tu bot de Telegram y en la web.</li>
+                <li>El estado del remedio cambiará a activo de inmediato.</li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3">
+              <Button
+                variant="outline"
+                onClick={() => setResumingRemedy(null)}
+                disabled={isSubmittingResume}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => handleConfirmResume(resumingRemedy)}
+                disabled={isSubmittingResume}
+                className="bg-primary hover:bg-primary-hover text-white font-bold text-xs"
+              >
+                {isSubmittingResume ? "Reanudando..." : "▶️ Confirmar y Reanudar"}
               </Button>
             </div>
           </div>

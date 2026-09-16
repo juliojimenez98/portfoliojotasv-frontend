@@ -69,6 +69,28 @@ export async function deleteRemedy(id: string): Promise<void> {
   await fetchWithAuth(`/api/remedies/${id}`, { method: "DELETE" });
 }
 
+export async function pauseRemedy(
+  id: string,
+  data: { pausedUntil?: string | null; reason?: string },
+): Promise<{ message: string; remedy: IRemedy }> {
+  const res = await fetchWithAuth(`/api/remedies/${id}/pause`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return { message: res.message, remedy: res.remedy };
+}
+
+export async function resumeRemedy(
+  id: string,
+  data?: { nextDoseAt?: string },
+): Promise<{ message: string; remedy: IRemedy }> {
+  const res = await fetchWithAuth(`/api/remedies/${id}/resume`, {
+    method: "POST",
+    body: JSON.stringify(data || {}),
+  });
+  return { message: res.message, remedy: res.remedy };
+}
+
 export async function executeRemedyAction(
   id: string,
   action: "taken" | "snooze" | "skipped",
