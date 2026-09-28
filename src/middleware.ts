@@ -21,6 +21,7 @@ export default auth((req) => {
     pathname === '/forgot-password' ||
     pathname === '/reset-password' ||
     pathname === '/unauthorized' ||
+    pathname.startsWith('/carioca') ||
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicons')

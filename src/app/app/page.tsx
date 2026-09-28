@@ -67,6 +67,27 @@ const APPS: AppCardConfig[] = [
       "Sincronización en tiempo real con la web",
     ],
   },
+  {
+    id: "carioca",
+    name: "Anotador de Carioca",
+    description:
+      "Anotador interactivo de puntos para el juego de cartas chileno Carioca. Rondas configurables, cálculo en tiempo real, detección de líder y podio final.",
+    icon: "🂠",
+    category: "Juegos & Ocio",
+    href: "/carioca",
+    gradient: "from-purple-500/10 via-pink-500/5 to-transparent",
+    accentBg: "bg-gradient-to-br from-purple-500 via-pink-500 to-amber-500",
+    badgeBg: "bg-purple-500/10 text-purple-500 dark:text-purple-400 border-purple-500/20",
+    borderHover: "hover:border-purple-500/50 hover:shadow-purple-500/10",
+    buttonClass: "bg-gradient-to-r from-purple-600 via-pink-600 to-amber-600 hover:opacity-90 text-white shadow-purple-600/20",
+    tags: ["Carioca", "Cartas", "Chile", "Mesa", "Multijugador"],
+    features: [
+      "8 Rondas clásicas o personalizadas",
+      "Cálculo automático de puntajes y líder",
+      "Modo Invitado offline y Conectado",
+      "Podio animado y estadísticas finales",
+    ],
+  },
 ];
 
 export default async function AppHubPage() {
@@ -78,9 +99,9 @@ export default async function AppHubPage() {
 
   const { name, email, isAdmin, allowedApps = [] } = session.user;
 
-  // Filter apps by user permissions (admin has access to everything)
+  // Filter apps by user permissions (admin has access to everything, and public apps like carioca are open)
   const accessibleApps = APPS.filter(
-    (app) => isAdmin || allowedApps.includes(app.id),
+    (app) => isAdmin || allowedApps.includes(app.id) || app.id === "carioca",
   );
 
   const displayName = name || email?.split("@")[0] || "Usuario";
