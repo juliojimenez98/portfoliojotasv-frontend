@@ -5,8 +5,10 @@ import Modal from "@/components/ui/Modal";
 import Input, { Select } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import type { IAccount } from "@/types/account";
+import type { ITransaction } from "@/types/transaction";
 import { formatCurrency } from "@/lib/utils";
 import { convertToCLP } from "@/actions/currency";
+import { getCreditCardBillingSummary } from "@/lib/creditCardBilling";
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ interface DepositModalProps {
   ) => Promise<void>;
   account: IAccount | null;
   accounts?: IAccount[];
+  transactions?: ITransaction[];
 }
 
 export default function DepositModal({
@@ -30,6 +33,7 @@ export default function DepositModal({
   onSubmit,
   account,
   accounts = [],
+  transactions = [],
 }: DepositModalProps) {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -38,6 +42,11 @@ export default function DepositModal({
   const isExpense = account?.type === "credit_card";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const billingSummary =
+    account?.type === "credit_card"
+      ? getCreditCardBillingSummary(account, transactions, new Date())
+      : null;
 
   // International payment state
   const [payingInternational, setPayingInternational] = useState(false);
@@ -193,24 +202,71 @@ export default function DepositModal({
 
           {account.type === "credit_card" ? (
             <div className="space-y-4 pt-2 border-t border-border/50">
-              {/* Cupo Nacional */}
-              <div className="space-y-2">
+              {/* Cupo Nacional y Facturación */}
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-foreground-muted">🇨🇱 Cupo Nacional ({account.currency})</span>
+                  <span className="text-xs font-bold text-foreground-muted">
+                    🇨🇱 Cupo Nacional ({account.currency})
+                  </span>
                   <span className="text-[10px] font-medium text-foreground-subtle">
-                    Límite: {formatCurrency(account.creditLimit || 0, account.currency)}
+                    Límite:{" "}
+                    {formatCurrency(account.creditLimit || 0, account.currency)}
                   </span>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-3 bg-background/40 p-2.5 rounded-xl border border-border/30">
+
+                {/* Billed vs Unbilled Breakdown */}
+                {billingSummary && (
+                  <div className="grid grid-cols-2 gap-2 bg-background/50 p-2.5 rounded-xl border border-border/40 text-xs">
+                    <div>
+                      <span className="text-[10px] text-foreground-subtle block uppercase font-bold flex items-center gap-1">
+                        <span>📄</span> Facturado (A pagar)
+                      </span>
+                      <span className="text-sm font-extrabold text-danger block mt-0.5">
+                        {formatCurrency(
+                          billingSummary.billedPending,
+                          account.currency,
+                        )}
+                      </span>
+                      <span className="text-[9px] text-foreground-subtle block">
+                        Corte: {billingSummary.lastCutoffLabel}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-foreground-subtle block uppercase font-bold flex items-center gap-1">
+                        <span>⏳</span> No Facturado
+                      </span>
+                      <span className="text-sm font-extrabold text-foreground block mt-0.5">
+                        {formatCurrency(
+                          billingSummary.unbilledExpenses,
+                          account.currency,
+                        )}
+                      </span>
+                      <span className="text-[9px] text-foreground-subtle block">
+                        Próx. ciclo ({billingSummary.nextCutoffLabel})
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 bg-background/30 p-2.5 rounded-xl border border-border/20">
                   <div>
-                    <span className="text-[10px] text-foreground-subtle block uppercase font-medium">Gastado</span>
+                    <span className="text-[10px] text-foreground-subtle block uppercase font-medium">
+                      Gastado Total
+                    </span>
                     <span className="text-sm font-extrabold text-danger">
-                      {formatCurrency(Math.max(0, (account.creditLimit || 0) - account.balance), account.currency)}
+                      {formatCurrency(
+                        Math.max(
+                          0,
+                          (account.creditLimit || 0) - account.balance,
+                        ),
+                        account.currency,
+                      )}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-foreground-subtle block uppercase font-medium">Disponible</span>
+                    <span className="text-[10px] text-foreground-subtle block uppercase font-medium">
+                      Disponible
+                    </span>
                     <span className="text-sm font-extrabold text-success">
                       {formatCurrency(account.balance, account.currency)}
                     </span>
@@ -221,7 +277,7 @@ export default function DepositModal({
                 {account.creditLimit ? (
                   <div className="space-y-1">
                     <div className="w-full h-2 rounded-full bg-border/40 overflow-hidden relative">
-                      <div 
+                      <div
                         className="h-full bg-danger rounded-full transition-all duration-500"
                         style={{ width: `${nationalSpentPct}%` }}
                       />
@@ -421,6 +477,75 @@ export default function DepositModal({
           </div>
         ) : (
           <>
+            {/* Quick Fill Suggestions for Credit Cards */}
+            {account.type === "credit_card" && billingSummary && (
+              <div className="space-y-1.5 mb-3">
+                <span className="text-xs font-semibold text-foreground-muted block">
+                  Sugerencias de pago rápido
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAmount(String(billingSummary.billedPending || 0))
+                    }
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      amount === String(billingSummary.billedPending)
+                        ? "border-primary bg-primary/10 shadow-sm"
+                        : "border-border bg-background-elevated hover:border-primary/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                        <span>📄</span> Facturado
+                      </span>
+                      {billingSummary.isPaid ? (
+                        <span className="text-[9px] bg-success/15 text-success px-1.5 py-0.5 rounded-full font-bold">
+                          Al día
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-sm font-extrabold text-danger font-mono mt-0.5">
+                      {formatCurrency(
+                        billingSummary.billedPending,
+                        account.currency,
+                      )}
+                    </p>
+                    <p className="text-[9px] text-foreground-subtle">
+                      Corte {billingSummary.lastCutoffLabel}
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAmount(String(billingSummary.totalSpent || 0))
+                    }
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      amount === String(billingSummary.totalSpent)
+                        ? "border-primary bg-primary/10 shadow-sm"
+                        : "border-border bg-background-elevated hover:border-primary/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                        <span>💳</span> Total Gastado
+                      </span>
+                    </div>
+                    <p className="text-sm font-extrabold text-foreground font-mono mt-0.5">
+                      {formatCurrency(
+                        billingSummary.totalSpent,
+                        account.currency,
+                      )}
+                    </p>
+                    <p className="text-[9px] text-foreground-subtle">
+                      Liquidación completa
+                    </p>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <Input
               label={
                 account.type === "credit_card"

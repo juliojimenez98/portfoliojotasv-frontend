@@ -7,6 +7,7 @@ import DeleteTransactionButton from "./DeleteTransactionButton";
 import TransactionFormModal from "./TransactionFormModal";
 import BulkExpenseModal from "./BulkExpenseModal";
 import { formatCurrency, cn, isCreditCardPayment } from "@/lib/utils";
+import { getTransactionBillingBadge } from "@/lib/creditCardBilling";
 import { updateTransaction } from "@/actions/transactions";
 import type { ITransaction, ICategory } from "@/types/transaction";
 import type { IAccount } from "@/types/account";
@@ -521,6 +522,11 @@ export default function TransactionsPanel({
                 {filtered.map((txn) => {
                   const cat = getCatDisplay(txn.category, txn);
                   const ccPayment = isCreditCardPayment(txn);
+                  const txnAccount = accounts.find((a) => a._id === txn.accountId);
+                  const billingBadge =
+                    txnAccount?.type === "credit_card" && txn.type === "expense" && !ccPayment
+                      ? getTransactionBillingBadge(txnAccount, txn.date)
+                      : null;
                   const dateStr = new Date(txn.date).toLocaleDateString(
                     "es-CL",
                     { day: "2-digit", month: "short", year: "numeric" },
@@ -557,6 +563,17 @@ export default function TransactionsPanel({
                               <span>{cat.icon} {cat.label}</span>
                               <span>·</span>
                               <span>{dateStr}</span>
+                              {billingBadge?.isCreditCard && billingBadge.label && (
+                                <span
+                                  className={cn(
+                                    "text-[9px] px-1.5 py-0.2 rounded-full border font-semibold inline-flex items-center gap-0.5",
+                                    billingBadge.colorClass,
+                                  )}
+                                >
+                                  <span>{billingBadge.icon}</span>
+                                  <span>{billingBadge.label}</span>
+                                </span>
+                              )}
                               {txn.createdAt && (
                                 <span
                                   className="text-[10px] text-foreground-subtle/80 bg-background-elevated px-1.5 py-0.5 rounded border border-border"
@@ -578,9 +595,22 @@ export default function TransactionsPanel({
                         </div>
                       </td>
                       <td className="py-3 px-3 hidden lg:table-cell">
-                        <span className="text-foreground-muted">
-                          {getAccountName(txn.accountId)}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-foreground-muted">
+                            {getAccountName(txn.accountId)}
+                          </span>
+                          {billingBadge?.isCreditCard && billingBadge.label && (
+                            <span
+                              className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded-full border font-semibold inline-flex items-center gap-1 w-fit",
+                                billingBadge.colorClass,
+                              )}
+                            >
+                              <span>{billingBadge.icon}</span>
+                              <span>{billingBadge.label}</span>
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-3 hidden sm:table-cell">
                         <div className="flex flex-col">

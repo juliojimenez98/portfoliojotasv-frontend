@@ -64,6 +64,8 @@ export default function AccountFormModal({
     currency: "CLP",
     balance: 0,
     creditLimit: 0,
+    billingDay: 22,
+    paymentDueDay: 5,
     hasInternational: false,
     internationalCreditLimit: 0,
     internationalBalance: 0,
@@ -83,6 +85,8 @@ export default function AccountFormModal({
         currency: account.currency,
         balance: account.balance,
         creditLimit: account.creditLimit || 0,
+        billingDay: account.billingDay || 22,
+        paymentDueDay: account.paymentDueDay || 5,
         hasInternational: !!account.internationalCreditLimit,
         internationalCreditLimit: account.internationalCreditLimit || 0,
         internationalBalance: account.internationalBalance || 0,
@@ -98,6 +102,8 @@ export default function AccountFormModal({
         currency: "CLP",
         balance: 0,
         creditLimit: 0,
+        billingDay: 22,
+        paymentDueDay: 5,
         hasInternational: false,
         internationalCreditLimit: 0,
         internationalBalance: 0,
@@ -117,6 +123,8 @@ export default function AccountFormModal({
       [name]:
         name === "balance" ||
         name === "creditLimit" ||
+        name === "billingDay" ||
+        name === "paymentDueDay" ||
         name === "internationalCreditLimit" ||
         name === "internationalBalance"
           ? parseFloat(value) || 0
@@ -140,6 +148,8 @@ export default function AccountFormModal({
       const payload = {
         ...form,
         creditLimit: form.type === "credit_card" ? form.creditLimit : undefined,
+        billingDay: form.type === "credit_card" ? (form.billingDay || 22) : undefined,
+        paymentDueDay: form.type === "credit_card" ? (form.paymentDueDay || undefined) : undefined,
         internationalCreditLimit:
           form.type === "credit_card" && form.hasInternational
             ? form.internationalCreditLimit
@@ -241,32 +251,76 @@ export default function AccountFormModal({
         </div>
 
         {form.type === "credit_card" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Cupo total (Límite de crédito) *"
-              name="creditLimit"
-              type="number"
-              step={form.currency === "CLP" ? "1" : "0.01"}
-              value={form.creditLimit.toString()}
-              onChange={handleChange}
-              placeholder="0"
-            />
-            <Input
-              label={
-                isEdit
-                  ? "Cupo disponible (Balance actual) *"
-                  : "Cupo disponible inicial (opcional)"
-              }
-              name="balance"
-              type="number"
-              step={form.currency === "CLP" ? "1" : "0.01"}
-              value={form.balance.toString()}
-              onChange={handleChange}
-              placeholder={
-                isEdit ? "0" : "Dejar en blanco para usar cupo total"
-              }
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Cupo total (Límite de crédito) *"
+                name="creditLimit"
+                type="number"
+                step={form.currency === "CLP" ? "1" : "0.01"}
+                value={form.creditLimit.toString()}
+                onChange={handleChange}
+                placeholder="0"
+              />
+              <Input
+                label={
+                  isEdit
+                    ? "Cupo disponible (Balance actual) *"
+                    : "Cupo disponible inicial (opcional)"
+                }
+                name="balance"
+                type="number"
+                step={form.currency === "CLP" ? "1" : "0.01"}
+                value={form.balance.toString()}
+                onChange={handleChange}
+                placeholder={
+                  isEdit ? "0" : "Dejar en blanco para usar cupo total"
+                }
+              />
+            </div>
+
+            {/* Billing & Due Dates */}
+            <div className="p-3.5 rounded-2xl bg-background-elevated border border-border space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">🗓️</span>
+                <p className="text-xs font-bold text-foreground uppercase tracking-wider">
+                  Ciclo de Facturación y Pagos
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Input
+                    label="Día de Facturación / Corte *"
+                    name="billingDay"
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={form.billingDay?.toString() || "22"}
+                    onChange={handleChange}
+                    placeholder="Ej: 22"
+                  />
+                  <p className="text-[10px] text-foreground-subtle mt-1">
+                    Día del mes en que el banco emite el estado de cuenta.
+                  </p>
+                </div>
+                <div>
+                  <Input
+                    label="Día de Vencimiento / Pago (opcional)"
+                    name="paymentDueDay"
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={form.paymentDueDay?.toString() || "5"}
+                    onChange={handleChange}
+                    placeholder="Ej: 5"
+                  />
+                  <p className="text-[10px] text-foreground-subtle mt-1">
+                    Día límite para pagar la facturación.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
         ) : (
           <Input
             label={isEdit ? "Balance actual *" : "Balance inicial"}

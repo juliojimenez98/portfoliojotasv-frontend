@@ -31,6 +31,7 @@ export const dynamic = "force-dynamic";
 import { formatCurrency } from "@/lib/utils";
 import type { IAccount } from "@/types/account";
 import type { ITransaction, ICategory } from "@/types/transaction";
+import { getCreditCardBillingSummary } from "@/lib/creditCardBilling";
 import Modal from "@/components/ui/Modal";
 const typeLabels: Record<string, string> = {
   credit_card: "Tarjeta de Crédito",
@@ -56,6 +57,7 @@ const refreshLabels: Record<string, string> = {
 
 export default function CuentasPage() {
   const [accounts, setAccounts] = useState<IAccount[]>([]);
+  const [allTransactions, setAllTransactions] = useState<ITransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal states
@@ -117,10 +119,15 @@ export default function CuentasPage() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const data = await getAccounts();
-      setAccounts(data);
+      const [accData, txData] = await Promise.all([
+        getAccounts(),
+        getTransactions(),
+      ]);
+      setAccounts(accData);
+      setAllTransactions(txData);
     } catch {
       setAccounts([]);
+      setAllTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -407,63 +414,116 @@ export default function CuentasPage() {
 
               {/* Balance */}
               {acc.type === "credit_card" ? (
-                <div className="mt-4 space-y-2">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
-                        Gastado
-                      </p>
-                      <p className="text-xl font-bold text-danger">
-                        -
-                        {formatCurrency(
-                          Math.max(0, (acc.creditLimit || 0) - acc.balance),
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
-                        Cupo Disp.
-                      </p>
-                      <p className="text-xl font-bold text-foreground">
-                        {formatCurrency(acc.balance)}
-                      </p>
-                    </div>
-                  </div>
-                  {acc.internationalCreditLimit != null &&
-                    acc.internationalCreditLimit > 0 && (
-                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-primary/8 border border-primary/20">
+                (() => {
+                  const billingSummary = getCreditCardBillingSummary(
+                    acc,
+                    allTransactions,
+                  );
+                  return (
+                    <div className="mt-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-[10px] text-foreground-subtle uppercase tracking-wider font-medium">
-                            🌐 Cupo Internacional
+                          <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                            Gastado Total
                           </p>
-                          <p className="text-sm font-bold text-foreground mt-0.5">
-                            USD{" "}
-                            {(acc.internationalBalance ?? 0).toLocaleString(
-                              "es-CL",
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              },
+                          <p className="text-xl font-bold text-danger">
+                            -
+                            {formatCurrency(
+                              Math.max(0, (acc.creditLimit || 0) - acc.balance),
                             )}
-                            <span className="text-xs font-normal text-foreground-subtle">
-                              {" "}
-                              disp.
-                            </span>
                           </p>
                         </div>
-                        <p className="text-xs text-foreground-subtle">
-                          / USD{" "}
-                          {acc.internationalCreditLimit.toLocaleString(
-                            "es-CL",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          )}
-                        </p>
+                        <div>
+                          <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                            Cupo Disp.
+                          </p>
+                          <p className="text-xl font-bold text-foreground">
+                            {formatCurrency(acc.balance)}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                </div>
+
+                      {/* Facturación Breakdown */}
+                      <div className="p-3 rounded-xl bg-background-elevated/70 border border-border/70 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-foreground-muted flex items-center gap-1">
+                            <span>📅</span> Facturación (Corte día {billingSummary.billingDay})
+                          </span>
+                          {billingSummary.isPaid ? (
+                            <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                              Al día ✓
+                            </span>
+                          ) : (
+                            <span className="text-[10px] bg-rose-500/15 text-rose-400 px-2 py-0.5 rounded-full font-bold">
+                              Pendiente
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="p-2 rounded-lg bg-background/60 border border-border/40">
+                            <span className="text-[10px] text-foreground-subtle block font-semibold">
+                              📄 Facturado (A Pagar)
+                            </span>
+                            <span className="text-base font-extrabold text-danger block mt-0.5">
+                              {formatCurrency(billingSummary.billedPending, acc.currency)}
+                            </span>
+                            <span className="text-[9px] text-foreground-subtle block mt-0.5">
+                              Corte: {billingSummary.lastCutoffLabel}
+                            </span>
+                          </div>
+
+                          <div className="p-2 rounded-lg bg-background/60 border border-border/40">
+                            <span className="text-[10px] text-foreground-subtle block font-semibold">
+                              ⏳ Próx. Facturación
+                            </span>
+                            <span className="text-base font-extrabold text-foreground block mt-0.5">
+                              {formatCurrency(billingSummary.unbilledExpenses, acc.currency)}
+                            </span>
+                            <span className="text-[9px] text-foreground-subtle block mt-0.5">
+                              Corte: {billingSummary.nextCutoffLabel}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {acc.internationalCreditLimit != null &&
+                        acc.internationalCreditLimit > 0 && (
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-primary/8 border border-primary/20">
+                            <div>
+                              <p className="text-[10px] text-foreground-subtle uppercase tracking-wider font-medium">
+                                🌐 Cupo Internacional
+                              </p>
+                              <p className="text-sm font-bold text-foreground mt-0.5">
+                                USD{" "}
+                                {(acc.internationalBalance ?? 0).toLocaleString(
+                                  "es-CL",
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  },
+                                )}
+                                <span className="text-xs font-normal text-foreground-subtle">
+                                  {" "}
+                                  disp.
+                                </span>
+                              </p>
+                            </div>
+                            <p className="text-xs text-foreground-subtle">
+                              / USD{" "}
+                              {acc.internationalCreditLimit.toLocaleString(
+                                "es-CL",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}
+                            </p>
+                          </div>
+                        )}
+                    </div>
+                  );
+                })()
               ) : (
                 <div className="mt-4">
                   <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
@@ -575,6 +635,7 @@ export default function CuentasPage() {
         onSubmit={handleDeposit}
         account={selectedAccount}
         accounts={accounts}
+        transactions={allTransactions}
       />
 
       <TransferModal

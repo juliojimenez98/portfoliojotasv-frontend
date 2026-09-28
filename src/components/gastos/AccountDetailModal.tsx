@@ -7,6 +7,10 @@ import Button from "@/components/ui/Button";
 import type { IAccount } from "@/types/account";
 import type { ITransaction } from "@/types/transaction";
 import { formatCurrency, isCreditCardPayment } from "@/lib/utils";
+import {
+  getCreditCardBillingSummary,
+  getTransactionBillingBadge,
+} from "@/lib/creditCardBilling";
 
 interface AccountDetailModalProps {
   isOpen: boolean;
@@ -40,9 +44,16 @@ export default function AccountDetailModal({
 
   if (!account) return null;
 
+  const billingSummary =
+    account.type === "credit_card"
+      ? getCreditCardBillingSummary(account, transactions, new Date())
+      : null;
+
   // Summaries
   const incomes = transactions.filter((t) => t.type === "income");
-  const expenses = transactions.filter((t) => t.type === "expense" || isCreditCardPayment(t));
+  const expenses = transactions.filter(
+    (t) => t.type === "expense" || isCreditCardPayment(t),
+  );
   const totalIncomesAmount = incomes.reduce((sum, t) => sum + t.amount, 0);
   const totalExpensesAmount = expenses.reduce((sum, t) => sum + t.amount, 0);
   const netDifference = totalIncomesAmount - totalExpensesAmount;
@@ -68,27 +79,113 @@ export default function AccountDetailModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Detalle de Cuenta: ${account.name}`} size="xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Detalle de Cuenta: ${account.name}`}
+      size="xl"
+    >
       <div className="space-y-6">
         {/* Account Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-background-elevated border border-border">
-            <p className="text-xs text-foreground-muted uppercase tracking-wider">Moneda</p>
-            <p className="text-lg font-bold text-foreground mt-1">{account.currency}</p>
+        {account.type === "credit_card" && billingSummary ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-danger/10 border border-danger/25">
+                <p className="text-[10px] text-foreground-subtle uppercase font-bold flex items-center gap-1">
+                  <span>📄</span> Facturado (A pagar)
+                </p>
+                <p className="text-lg font-extrabold text-danger mt-1">
+                  {formatCurrency(
+                    billingSummary.billedPending,
+                    account.currency,
+                  )}
+                </p>
+                <p className="text-[10px] text-foreground-subtle mt-0.5">
+                  Corte: {billingSummary.lastCutoffLabel}
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25">
+                <p className="text-[10px] text-foreground-subtle uppercase font-bold flex items-center gap-1">
+                  <span>⏳</span> No Facturado
+                </p>
+                <p className="text-lg font-extrabold text-foreground mt-1">
+                  {formatCurrency(
+                    billingSummary.unbilledExpenses,
+                    account.currency,
+                  )}
+                </p>
+                <p className="text-[10px] text-foreground-subtle mt-0.5">
+                  Próx. ciclo ({billingSummary.nextCutoffLabel})
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-background-elevated border border-border">
+                <p className="text-[10px] text-foreground-subtle uppercase font-bold">
+                  Deuda Total
+                </p>
+                <p className="text-lg font-extrabold text-foreground mt-1">
+                  {formatCurrency(billingSummary.totalSpent, account.currency)}
+                </p>
+                <p className="text-[10px] text-foreground-subtle mt-0.5">
+                  Cupo ocupado
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-success/10 border border-success/20">
+                <p className="text-[10px] text-foreground-subtle uppercase font-bold">
+                  Cupo Disponible
+                </p>
+                <p className="text-lg font-extrabold text-success mt-1">
+                  {formatCurrency(account.balance, account.currency)}
+                </p>
+                <p className="text-[10px] text-foreground-subtle mt-0.5">
+                  de {formatCurrency(account.creditLimit || 0, account.currency)}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="p-4 rounded-xl bg-background-elevated border border-border">
-            <p className="text-xs text-foreground-muted uppercase tracking-wider">Tipo</p>
-            <p className="text-lg font-bold text-foreground mt-1 capitalize">{account.type.replace("_", " ")}</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-background-elevated border border-border">
+              <p className="text-xs text-foreground-muted uppercase tracking-wider">
+                Moneda
+              </p>
+              <p className="text-lg font-bold text-foreground mt-1">
+                {account.currency}
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-background-elevated border border-border">
+              <p className="text-xs text-foreground-muted uppercase tracking-wider">
+                Tipo
+              </p>
+              <p className="text-lg font-bold text-foreground mt-1 capitalize">
+                {account.type.replace("_", " ")}
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+              <p className="text-xs text-primary font-bold uppercase tracking-wider">
+                Saldo de la Cuenta
+              </p>
+              <p className="text-2xl font-bold text-foreground mt-1">
+                {formatCurrency(account.balance, account.currency)}
+              </p>
+            </div>
           </div>
-          <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-            <p className="text-xs text-primary font-bold uppercase tracking-wider">Saldo de la Cuenta</p>
-            <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(account.balance, account.currency)}</p>
-          </div>
-        </div>
+        )}
 
         {/* Transactions Section */}
         <div className="space-y-3">
-          <h3 className="text-base font-bold text-foreground">Historial de Movimientos</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-foreground">
+              Historial de Movimientos
+            </h3>
+            {account.type === "credit_card" && (
+              <span className="text-xs text-foreground-subtle">
+                Corte cada día {account.billingDay || 22} de mes
+              </span>
+            )}
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -106,6 +203,9 @@ export default function AccountDetailModal({
                     <th className="py-2.5 px-3">Fecha</th>
                     <th className="py-2.5 px-3">Descripción</th>
                     <th className="py-2.5 px-3">Tipo</th>
+                    {account.type === "credit_card" && (
+                      <th className="py-2.5 px-3">Facturación</th>
+                    )}
                     <th className="py-2.5 px-3 text-right">Monto</th>
                   </tr>
                 </thead>
@@ -113,28 +213,54 @@ export default function AccountDetailModal({
                   {transactions.map((txn) => {
                     const isCC = isCreditCardPayment(txn);
                     const isExpense = txn.type === "expense" || isCC;
-                    const dateStr = new Date(txn.date).toLocaleDateString("es-CL", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    });
+                    const dateStr = new Date(txn.date).toLocaleDateString(
+                      "es-CL",
+                      {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      },
+                    );
+                    const billingBadge = getTransactionBillingBadge(
+                      account,
+                      txn.date,
+                    );
 
                     return (
-                      <tr key={txn._id} className="border-b border-border/50 hover:bg-white/2 transition-colors">
+                      <tr
+                        key={txn._id}
+                        className="border-b border-border/50 hover:bg-white/2 transition-colors"
+                      >
                         <td className="py-2.5 px-3 whitespace-nowrap">
                           <div className="flex flex-col">
-                            <span className="text-foreground font-medium text-xs">{dateStr}</span>
+                            <span className="text-foreground font-medium text-xs">
+                              {dateStr}
+                            </span>
                             {txn.createdAt && (
                               <span
                                 className="text-[10px] text-foreground-subtle flex items-center gap-1"
                                 title={`Registrado en la app: ${new Date(txn.createdAt).toLocaleString("es-CL")}`}
                               >
-                                <span className="opacity-70">🕒</span> {new Date(txn.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "2-digit" })} {new Date(txn.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                                <span className="opacity-70">🕒</span>{" "}
+                                {new Date(txn.createdAt).toLocaleDateString(
+                                  "es-CL",
+                                  {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "2-digit",
+                                  },
+                                )}{" "}
+                                {new Date(txn.createdAt).toLocaleTimeString(
+                                  "es-CL",
+                                  { hour: "2-digit", minute: "2-digit" },
+                                )}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 font-medium text-foreground">{txn.description}</td>
+                        <td className="py-2.5 px-3 font-medium text-foreground">
+                          {txn.description}
+                        </td>
                         <td className="py-2.5 px-3 text-xs">
                           {isCC ? (
                             <span className="px-2 py-0.5 rounded-full bg-danger/10 text-danger font-medium">
@@ -154,9 +280,31 @@ export default function AccountDetailModal({
                             </span>
                           )}
                         </td>
-                        <td className={`py-2.5 px-3 text-right font-bold whitespace-nowrap ${
-                          isExpense ? "text-danger" : txn.type === "income" ? "text-success" : "text-primary"
-                        }`}>
+                        {account.type === "credit_card" && (
+                          <td className="py-2.5 px-3 text-xs whitespace-nowrap">
+                            {txn.type === "expense" &&
+                            billingBadge.isCreditCard ? (
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${billingBadge.colorClass}`}
+                              >
+                                {billingBadge.icon} {billingBadge.label}
+                              </span>
+                            ) : (
+                              <span className="text-foreground-subtle/50 text-xs">
+                                —
+                              </span>
+                            )}
+                          </td>
+                        )}
+                        <td
+                          className={`py-2.5 px-3 text-right font-bold whitespace-nowrap ${
+                            isExpense
+                              ? "text-danger"
+                              : txn.type === "income"
+                                ? "text-success"
+                                : "text-primary"
+                          }`}
+                        >
                           {isExpense ? "-" : txn.type === "income" ? "+" : "⇄ "}
                           {formatCurrency(txn.amount, account.currency)}
                         </td>

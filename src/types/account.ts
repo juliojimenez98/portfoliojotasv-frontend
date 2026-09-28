@@ -18,6 +18,8 @@ export interface IAccount {
   creditLimit?: number;
   internationalCreditLimit?: number; // Total USD international credit limit
   internationalBalance?: number; // Available USD international credit
+  billingDay?: number; // Cutoff / statement closing day of the month (1-31)
+  paymentDueDay?: number; // Payment due day of the month (1-31)
   color: string;
   icon: string;
   refreshType: RefreshType;
@@ -36,6 +38,8 @@ export interface CreateAccountInput {
   creditLimit?: number;
   internationalCreditLimit?: number;
   internationalBalance?: number;
+  billingDay?: number;
+  paymentDueDay?: number;
   color?: string;
   icon?: string;
   refreshType?: RefreshType;
@@ -51,6 +55,8 @@ export interface UpdateAccountInput {
   creditLimit?: number;
   internationalCreditLimit?: number;
   internationalBalance?: number;
+  billingDay?: number;
+  paymentDueDay?: number;
   color?: string;
   icon?: string;
   refreshType?: RefreshType;

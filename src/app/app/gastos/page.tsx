@@ -25,6 +25,7 @@ import DeleteTransactionButton from "@/components/gastos/DeleteTransactionButton
 import CategoryChartCard from "@/components/gastos/CategoryChartCard";
 import ActivePeriodBanner from "@/components/gastos/ActivePeriodBanner";
 import { formatCurrency, isCreditCardPayment } from "@/lib/utils";
+import { getCreditCardBillingSummary } from "@/lib/creditCardBilling";
 import type { IAccount } from "@/types/account";
 import type { ITransaction, MonthlyExpenseSummary } from "@/types/transaction";
 import type { ISpendPeriod } from "@/types/period";
@@ -326,32 +327,45 @@ export default async function GastosDashboardPage({
                       </div>
                     </div>
                     {account.type === "credit_card" ? (
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-danger">
-                          -
-                          {formatCurrency(
-                            Math.max(
-                              0,
-                              (account.creditLimit || 0) - account.balance,
-                            ),
-                          )}
-                        </p>
-                        <p className="text-[10px] text-foreground-subtle">
-                          Cupo: {formatCurrency(account.balance)}
-                        </p>
-                        {account.internationalCreditLimit != null &&
-                          account.internationalCreditLimit > 0 && (
-                            <p className="text-[10px] text-primary mt-0.5">
-                              🌐 USD{" "}
-                              {(
-                                account.internationalBalance ?? 0
-                              ).toLocaleString("es-CL", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
+                      (() => {
+                        const billingSummary = getCreditCardBillingSummary(
+                          account,
+                          recentTransactions,
+                        );
+                        return (
+                          <div className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <span className="text-[11px] text-foreground-subtle font-medium">
+                                Facturado:
+                              </span>
+                              <span
+                                className={`text-sm font-bold ${
+                                  billingSummary.billedPending > 0
+                                    ? "text-danger"
+                                    : "text-success"
+                                }`}
+                              >
+                                {formatCurrency(billingSummary.billedPending)}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-foreground-subtle">
+                              Cupo Disp: {formatCurrency(account.balance)} · Corte día {billingSummary.billingDay}
                             </p>
-                          )}
-                      </div>
+                            {account.internationalCreditLimit != null &&
+                              account.internationalCreditLimit > 0 && (
+                                <p className="text-[10px] text-primary mt-0.5">
+                                  🌐 USD{" "}
+                                  {(
+                                    account.internationalBalance ?? 0
+                                  ).toLocaleString("es-CL", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </p>
+                              )}
+                          </div>
+                        );
+                      })()
                     ) : (
                       <p className="text-sm font-semibold text-foreground">
                         {formatCurrency(account.balance)}
