@@ -112,6 +112,48 @@
 }
 
 /* ========================================
+   APP PALETTES — Remedios (Sky/Indigo)
+   ======================================== */
+[data-app="remedios"] {
+  --color-primary: #0284c7;
+  --color-primary-light: #38bdf8;
+  --color-primary-dark: #0369a1;
+  --color-secondary: #4f46e5;
+  --color-secondary-light: #818cf8;
+  --color-accent: #10b981;
+  --gradient-primary: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+  --gradient-accent: linear-gradient(135deg, #10b981 0%, #0284c7 100%);
+  --shadow-glow: 0 0 20px rgba(2, 132, 199, 0.15);
+}
+.dark [data-app="remedios"] {
+  --color-primary: #38bdf8;
+  --color-primary-light: #7dd3fc;
+  --color-primary-dark: #0284c7;
+  --shadow-glow: 0 0 20px rgba(56, 189, 248, 0.24);
+}
+
+/* ========================================
+   APP PALETTES — Actividades (Amber/Rose)
+   ======================================== */
+[data-app="actividades"] {
+  --color-primary: #d97706;
+  --color-primary-light: #f59e0b;
+  --color-primary-dark: #b45309;
+  --color-secondary: #e11d48;
+  --color-secondary-light: #fb7185;
+  --color-accent: #2563eb;
+  --gradient-primary: linear-gradient(135deg, #d97706 0%, #e11d48 100%);
+  --gradient-accent: linear-gradient(135deg, #2563eb 0%, #d97706 100%);
+  --shadow-glow: 0 0 20px rgba(217, 119, 6, 0.15);
+}
+.dark [data-app="actividades"] {
+  --color-primary: #f59e0b;
+  --color-primary-light: #fbbf24;
+  --color-primary-dark: #d97706;
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.24);
+}
+
+/* ========================================
    APP PALETTES — Admin (Indigo/Violet)
    ======================================== */
 [data-app="admin"] {

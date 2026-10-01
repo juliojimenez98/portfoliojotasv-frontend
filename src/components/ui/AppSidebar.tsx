@@ -26,6 +26,11 @@ const remediosNavItems = [
   { href: "/app/remedios", label: "Remedios", icon: "💊" },
 ];
 
+const actividadesNavItems = [
+  { href: "/app", label: "Mis Apps", icon: "🗂️" },
+  { href: "/app/actividades", label: "Actividades", icon: "✅" },
+];
+
 export default function AppSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -33,12 +38,21 @@ export default function AppSidebar() {
 
   const isHub = pathname === "/app";
   const isRemedios = pathname.startsWith("/app/remedios");
-  const navItems = isHub ? hubNavItems : isRemedios ? remediosNavItems : gastosNavItems;
+  const isActividades = pathname.startsWith("/app/actividades");
+  const navItems = isHub
+    ? hubNavItems
+    : isRemedios
+      ? remediosNavItems
+      : isActividades
+        ? actividadesNavItems
+        : gastosNavItems;
   const mobileNavItems = isHub
     ? hubNavItems
     : isRemedios
       ? remediosNavItems
-      : gastosNavItems.filter((item) => item.href !== "/app/gastos/configuracion");
+      : isActividades
+        ? actividadesNavItems
+        : gastosNavItems.filter((item) => item.href !== "/app/gastos/configuracion");
 
   return (
     <>
@@ -82,7 +96,13 @@ export default function AppSidebar() {
           <div className="flex flex-col gap-1 px-3">
             {!isCollapsed && (
               <p className="text-xs font-bold text-foreground-muted uppercase tracking-wider mb-2 px-3">
-                {isHub ? "Plataforma" : isRemedios ? "Medicamentos" : "Finanzas"}
+                {isHub
+                  ? "Plataforma"
+                  : isRemedios
+                    ? "Medicamentos"
+                    : isActividades
+                      ? "Rutinas"
+                      : "Finanzas"}
               </p>
             )}
             <nav className="flex flex-col gap-1.5">
@@ -270,16 +290,18 @@ export default function AppSidebar() {
                 </span>
               </Link>
 
-              <Link
-                href="/app/gastos/configuracion"
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-4 p-4 rounded-2xl bg-background border border-border active:bg-background-elevated transition-colors"
-              >
-                <span className="text-2xl">⚙️</span>
-                <span className="text-sm font-semibold text-foreground">
-                  Configuración
-                </span>
-              </Link>
+              {!isRemedios && !isActividades && (
+                <Link
+                  href="/app/gastos/configuracion"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="flex items-center gap-4 p-4 rounded-2xl bg-background border border-border active:bg-background-elevated transition-colors"
+                >
+                  <span className="text-2xl">⚙️</span>
+                  <span className="text-sm font-semibold text-foreground">
+                    Configuración
+                  </span>
+                </Link>
+              )}
 
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-background border border-border">
                 <span className="text-2xl">🌙</span>

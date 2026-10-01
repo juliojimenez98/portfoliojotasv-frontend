@@ -52,6 +52,27 @@ const APPS = [
     ],
   },
   {
+    id: "actividades",
+    name: "Actividades y Tareas",
+    category: "Productividad & Hábitos",
+    description:
+      "Rutinas recurrentes, turnos de trabajo y tareas personales con registros de entrada, salida, omisiones e historial diario.",
+    icon: "✅",
+    href: "/app/actividades",
+    gradient: "from-amber-500/15 via-rose-500/5 to-transparent",
+    accentBg: "bg-gradient-to-br from-amber-500 to-rose-600",
+    badgeBg: "bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/20",
+    borderHover: "hover:border-amber-500/50 hover:shadow-amber-500/10",
+    buttonClass: "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/25",
+    tags: ["Rutinas", "Trabajo", "Tareas", "Historial"],
+    features: [
+      "Marcas de entrada y salida",
+      "Días específicos, semana laboral o fines de semana",
+      "Tareas recurrentes con completar u omitir",
+      "Historial de actividad diaria",
+    ],
+  },
+  {
     id: "carioca",
     name: "Anotador de Carioca",
     category: "Juegos & Entretenimiento",

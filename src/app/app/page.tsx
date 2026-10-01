@@ -68,6 +68,27 @@ const APPS: AppCardConfig[] = [
     ],
   },
   {
+    id: "actividades",
+    name: "Actividades y Tareas",
+    description:
+      "Organiza rutinas recurrentes, turnos de trabajo, tareas personales y registros con entrada, salida, omisiones e historial diario.",
+    icon: "✅",
+    category: "Productividad & Hábitos",
+    href: "/app/actividades",
+    gradient: "from-amber-500/10 via-rose-500/5 to-transparent",
+    accentBg: "bg-gradient-to-br from-amber-500 to-rose-600",
+    badgeBg: "bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/20",
+    borderHover: "hover:border-amber-500/50 hover:shadow-amber-500/10",
+    buttonClass: "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20",
+    tags: ["Rutinas", "Trabajo", "Tareas", "Historial"],
+    features: [
+      "Entrada y salida para jornadas o turnos",
+      "Frecuencias por dias, semanas o intervalos",
+      "Vista de hoy con acciones rapidas",
+      "Historial de actividades completadas u omitidas",
+    ],
+  },
+  {
     id: "carioca",
     name: "Anotador de Carioca",
     description:

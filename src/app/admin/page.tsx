@@ -19,10 +19,11 @@ export default async function AdminDashboardPage() {
   const adminsCount = users.filter((u: any) => u.isAdmin).length;
   const regularUsersCount = users.length - adminsCount;
   const gastosUsersCount = users.filter((u: any) => u.allowedApps?.includes('gastos')).length;
+  const actividadesUsersCount = users.filter((u: any) => u.allowedApps?.includes('actividades')).length;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card variant="glow" padding="lg">
           <CardTitle className="text-center text-foreground-muted text-sm uppercase tracking-widest mb-2">Total Usuarios</CardTitle>
           <p className="text-5xl font-bold text-center text-foreground">{users.length}</p>
@@ -36,6 +37,11 @@ export default async function AdminDashboardPage() {
         <Card variant="default" padding="lg">
           <CardTitle className="text-center text-foreground-muted text-sm uppercase tracking-widest mb-2">Acceso a Gastos</CardTitle>
           <p className="text-5xl font-bold text-center text-emerald-500">{gastosUsersCount}</p>
+        </Card>
+
+        <Card variant="default" padding="lg">
+          <CardTitle className="text-center text-foreground-muted text-sm uppercase tracking-widest mb-2">Acceso a Actividades</CardTitle>
+          <p className="text-5xl font-bold text-center text-amber-500">{actividadesUsersCount}</p>
         </Card>
       </div>
 

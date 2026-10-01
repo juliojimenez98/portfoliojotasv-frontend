@@ -130,6 +130,24 @@ export default function EditUserForm({ user }: { user: any }) {
                 </p>
               </div>
             </label>
+
+            <label className="flex items-center gap-3 p-4 rounded-xl border border-white/5 bg-background-light/50 cursor-pointer hover:bg-white/5 transition-colors">
+              <input
+                type="checkbox"
+                name="allowedApps"
+                value="actividades"
+                defaultChecked={user.allowedApps?.includes("actividades")}
+                className="w-5 h-5 rounded border-white/10 bg-background text-amber-500 focus:ring-amber-500/50"
+              />
+              <div>
+                <p className="font-medium text-foreground">
+                  App: Actividades y Tareas
+                </p>
+                <p className="text-xs text-foreground-muted">
+                  Rutinas recurrentes, tareas y registros de entrada o salida.
+                </p>
+              </div>
+            </label>
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row gap-3">
