@@ -40,6 +40,7 @@ interface PeriodTransactionOptions {
   startDate?: Date;
   endDate?: Date;
   includeUnbilled?: boolean;
+  onlyUnbilled?: boolean;
   referenceDate?: Date;
 }
 
@@ -50,13 +51,14 @@ export function filterPeriodTransactions(
     startDate,
     endDate,
     includeUnbilled = false,
+    onlyUnbilled = false,
     referenceDate = new Date(),
   }: PeriodTransactionOptions,
 ): ITransaction[] {
   if (startDate && endDate && startDate > endDate) return [];
 
   const cutoffs = new Map(
-    includeUnbilled
+    includeUnbilled || onlyUnbilled
       ? accounts
           .filter((account) => account.type === "credit_card")
           .map((account) => [
@@ -70,7 +72,9 @@ export function filterPeriodTransactions(
     const date = new Date(transaction.date);
     if (!Number.isFinite(date.getTime())) return false;
     if (endDate && date > endDate) return false;
-    if (!startDate || date >= startDate) return true;
+    const isInRange = !startDate || date >= startDate;
+    if (isInRange && !onlyUnbilled) return true;
+    if (!isInRange && !includeUnbilled) return false;
 
     const cutoff = cutoffs.get(transaction.accountId);
     if (

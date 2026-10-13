@@ -42,6 +42,7 @@ export default function TransactionsPanel({
   const [sortBy, setSortBy] = useState<"date" | "createdAt" | "amount">("date");
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
   const [includeUnbilled, setIncludeUnbilled] = useState(false);
+  const [onlyUnbilled, setOnlyUnbilled] = useState(false);
 
   const filtered = useMemo(() => {
     let result = [...transactions];
@@ -69,6 +70,7 @@ export default function TransactionsPanel({
       startDate: rangeStart,
       endDate: rangeEnd,
       includeUnbilled,
+      onlyUnbilled,
     });
 
     // Type filter
@@ -120,6 +122,7 @@ export default function TransactionsPanel({
     transactions,
     accounts,
     includeUnbilled,
+    onlyUnbilled,
     periods,
     periodFilter,
     typeFilter,
@@ -148,6 +151,7 @@ export default function TransactionsPanel({
     setDateTo("");
     setPeriodFilter("all");
     setIncludeUnbilled(false);
+    setOnlyUnbilled(false);
   };
 
   const hasActiveFilters =
@@ -158,7 +162,8 @@ export default function TransactionsPanel({
     dateFrom !== "" ||
     dateTo !== "" ||
     periodFilter !== "all" ||
-    includeUnbilled;
+    includeUnbilled ||
+    onlyUnbilled;
 
   const getCatDisplay = (catValue: string, txn?: ITransaction) => {
     if (txn && isCreditCardPayment(txn)) return { icon: "💳", label: "Abono a tarjeta credito" };
@@ -318,10 +323,21 @@ export default function TransactionsPanel({
           )}
         </CardHeader>
 
-        <IncludeUnbilledCheckbox
-          checked={includeUnbilled}
-          onChange={setIncludeUnbilled}
-        />
+        <div className="space-y-3">
+          <label className="flex w-fit max-w-full items-start gap-2 text-sm text-foreground-muted cursor-pointer">
+            <input
+              type="checkbox"
+              checked={onlyUnbilled}
+              onChange={(event) => setOnlyUnbilled(event.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            />
+            <span>Solo pendientes de facturación (TC)</span>
+          </label>
+          <IncludeUnbilledCheckbox
+            checked={includeUnbilled}
+            onChange={setIncludeUnbilled}
+          />
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3">
           {/* Search */}

@@ -128,3 +128,52 @@ test("future purchases are not added as pending before a future range", () => {
     ...options, startDate: new Date("2026-10-20T15:00:00Z"), endDate: undefined,
   }), []);
 });
+
+test("only pending filters the entire history to unbilled credit card purchases", () => {
+  const transactions = [
+    expense("billed", "2026-09-22T15:00:00Z"),
+    expense("pending", "2026-09-24T15:00:00Z"),
+    expense("other-billed", "2026-09-24T15:00:00Z", { accountId: "other-tc" }),
+    expense("other-pending", "2026-09-26T15:00:00Z", { accountId: "other-tc" }),
+    expense("current", "2026-10-05T15:00:00Z"),
+    expense("debit", "2026-10-05T15:00:00Z", { accountId: "debit" }),
+    expense("income", "2026-10-05T15:00:00Z", { type: "income" }),
+    expense("payment", "2026-10-05T15:00:00Z", { category: "abono_tarjeta" }),
+    expense("transfer", "2026-10-05T15:00:00Z", { type: "transfer" }),
+    expense("future", "2026-10-15T15:00:00Z"),
+  ];
+  const filtered = filterPeriodTransactions(transactions, accounts, {
+    referenceDate: options.referenceDate,
+    onlyUnbilled: true,
+  });
+  assert.deepEqual(ids(filtered), ["pending", "other-pending", "current"]);
+  assert.equal(filtered.reduce((sum, transaction) => sum + transaction.amount, 0), 3000);
+});
+
+test("only pending respects the selected period and can include previous pending purchases", () => {
+  const transactions = [
+    expense("previous", "2026-09-27T15:00:00Z"),
+    expense("current", "2026-10-05T15:00:00Z"),
+    expense("after-end", "2026-10-10T15:00:00Z"),
+  ];
+  const range = {
+    ...options,
+    endDate: new Date("2026-10-06T23:00:00Z"),
+    onlyUnbilled: true,
+  };
+  assert.deepEqual(ids(filterPeriodTransactions(transactions, accounts, {
+    ...range, includeUnbilled: false,
+  })), ["current"]);
+  assert.deepEqual(ids(filterPeriodTransactions(transactions, accounts, range)), ["previous", "current"]);
+});
+
+test("turning off only pending restores billed and non-card transactions", () => {
+  const transactions = [
+    expense("billed", "2026-09-22T15:00:00Z"),
+    expense("pending", "2026-09-24T15:00:00Z"),
+    expense("debit", "2026-10-05T15:00:00Z", { accountId: "debit" }),
+  ];
+  assert.deepEqual(filterPeriodTransactions(transactions, accounts, {
+    onlyUnbilled: false, referenceDate: options.referenceDate,
+  }), transactions);
+});
