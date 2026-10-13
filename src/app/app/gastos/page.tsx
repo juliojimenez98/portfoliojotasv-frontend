@@ -24,6 +24,8 @@ import NewTransactionButton from "@/components/gastos/NewTransactionButton";
 import DeleteTransactionButton from "@/components/gastos/DeleteTransactionButton";
 import CategoryChartCard from "@/components/gastos/CategoryChartCard";
 import ActivePeriodBanner from "@/components/gastos/ActivePeriodBanner";
+import { DashboardUnbilledCheckbox } from "@/components/gastos/IncludeUnbilledCheckbox";
+import { filterPeriodTransactions } from "@/modules/gastos/services/periodTransactions";
 import { formatCurrency, isCreditCardPayment } from "@/lib/utils";
 import { getCreditCardBillingSummary } from "@/lib/creditCardBilling";
 import type { IAccount } from "@/types/account";
@@ -39,10 +41,11 @@ export const metadata: Metadata = {
 export default async function GastosDashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ accountId?: string }>;
+  searchParams: Promise<{ accountId?: string; includeUnbilled?: string }>;
 }) {
   const params = await searchParams;
   const selectedAccountId = params?.accountId || null;
+  const includeUnbilled = params.includeUnbilled === "1";
 
   let accounts: IAccount[] = [];
   let monthlyByAccount: MonthlyExpenseSummary[] = [];
@@ -117,9 +120,14 @@ export default async function GastosDashboardPage({
     );
   };
 
-  const periodExpenses = displayedTransactions.filter(
-    (t) => (t.type === "expense" || isCreditCardPayment(t)) && isInRange(t.date),
-  );
+  const periodExpenses = filterPeriodTransactions(displayedTransactions, accounts, {
+    startDate: periodStart ?? new Date(now.getFullYear(), now.getMonth(), 1),
+    endDate: periodStart
+      ? undefined
+      : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999),
+    includeUnbilled,
+    referenceDate: now,
+  }).filter((t) => t.type === "expense" || isCreditCardPayment(t));
   const periodIncome = displayedTransactions.filter(
     (t) => t.type === "income" && isInRange(t.date),
   );
@@ -232,6 +240,8 @@ export default async function GastosDashboardPage({
         accounts={accounts}
       />
 
+      <DashboardUnbilledCheckbox checked={includeUnbilled} />
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
         <Card variant="gradient">
@@ -295,11 +305,13 @@ export default async function GastosDashboardPage({
                 return (
                   <Link
                     key={account._id}
-                    href={
-                      isSelected
-                        ? "/app/gastos"
-                        : `/app/gastos?accountId=${account._id}`
-                    }
+                    href={{
+                      pathname: "/app/gastos",
+                      query: {
+                        ...(!isSelected ? { accountId: account._id } : {}),
+                        ...(includeUnbilled ? { includeUnbilled: "1" } : {}),
+                      },
+                    }}
                     className={`flex items-center justify-between p-3 rounded-lg border transition-all block ${
                       isSelected
                         ? "border-primary bg-primary/10 shadow-md shadow-primary/10"

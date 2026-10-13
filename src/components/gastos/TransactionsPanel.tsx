@@ -6,6 +6,8 @@ import Badge from "@/components/ui/Badge";
 import DeleteTransactionButton from "./DeleteTransactionButton";
 import TransactionFormModal from "./TransactionFormModal";
 import BulkExpenseModal from "./BulkExpenseModal";
+import IncludeUnbilledCheckbox from "./IncludeUnbilledCheckbox";
+import { filterPeriodTransactions } from "@/modules/gastos/services/periodTransactions";
 import { formatCurrency, cn, isCreditCardPayment } from "@/lib/utils";
 import { getTransactionBillingBadge } from "@/lib/creditCardBilling";
 import { updateTransaction } from "@/actions/transactions";
@@ -39,23 +41,35 @@ export default function TransactionsPanel({
   const [periodFilter, setPeriodFilter] = useState<string>("all"); // 'all' | period._id
   const [sortBy, setSortBy] = useState<"date" | "createdAt" | "amount">("date");
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
+  const [includeUnbilled, setIncludeUnbilled] = useState(false);
 
   const filtered = useMemo(() => {
     let result = [...transactions];
 
-    // Period filter (overrides dateFrom/dateTo when active)
+    let rangeStart: Date | undefined;
+    let rangeEnd: Date | undefined;
     if (periodFilter !== "all") {
       const period = periods.find((p) => p._id === periodFilter);
       if (period) {
-        const from = new Date(period.startDate);
-        const to = period.endDate ? new Date(period.endDate) : new Date();
-        to.setHours(23, 59, 59, 999);
-        result = result.filter((t) => {
-          const d = new Date(t.date);
-          return d >= from && d <= to;
-        });
+        rangeStart = new Date(period.startDate);
+        rangeEnd = period.endDate ? new Date(period.endDate) : new Date();
+        rangeEnd.setHours(23, 59, 59, 999);
       }
     }
+
+    if (dateFrom) {
+      const from = new Date(`${dateFrom}T00:00:00`);
+      if (!rangeStart || from > rangeStart) rangeStart = from;
+    }
+    if (dateTo) {
+      const to = new Date(`${dateTo}T23:59:59.999`);
+      if (!rangeEnd || to < rangeEnd) rangeEnd = to;
+    }
+    result = filterPeriodTransactions(result, accounts, {
+      startDate: rangeStart,
+      endDate: rangeEnd,
+      includeUnbilled,
+    });
 
     // Type filter
     if (typeFilter !== "all") {
@@ -86,17 +100,6 @@ export default function TransactionsPanel({
       result = result.filter((t) => t.description.toLowerCase().includes(q));
     }
 
-    // Date range
-    if (dateFrom) {
-      const from = new Date(dateFrom);
-      result = result.filter((t) => new Date(t.date) >= from);
-    }
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
-      result = result.filter((t) => new Date(t.date) <= to);
-    }
-
     // Sort
     result.sort((a, b) => {
       let cmp = 0;
@@ -115,6 +118,8 @@ export default function TransactionsPanel({
     return result;
   }, [
     transactions,
+    accounts,
+    includeUnbilled,
     periods,
     periodFilter,
     typeFilter,
@@ -142,6 +147,7 @@ export default function TransactionsPanel({
     setDateFrom("");
     setDateTo("");
     setPeriodFilter("all");
+    setIncludeUnbilled(false);
   };
 
   const hasActiveFilters =
@@ -151,7 +157,8 @@ export default function TransactionsPanel({
     searchQuery.trim() !== "" ||
     dateFrom !== "" ||
     dateTo !== "" ||
-    periodFilter !== "all";
+    periodFilter !== "all" ||
+    includeUnbilled;
 
   const getCatDisplay = (catValue: string, txn?: ITransaction) => {
     if (txn && isCreditCardPayment(txn)) return { icon: "💳", label: "Abono a tarjeta credito" };
@@ -310,6 +317,11 @@ export default function TransactionsPanel({
             </button>
           )}
         </CardHeader>
+
+        <IncludeUnbilledCheckbox
+          checked={includeUnbilled}
+          onChange={setIncludeUnbilled}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3">
           {/* Search */}
